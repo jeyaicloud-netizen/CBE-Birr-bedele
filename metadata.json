@@ -1,0 +1,6 @@
+{
+  "name": "CBEBirr Plus",
+  "description": "A mobile application simulating the CBEBirr Plus banking experience.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

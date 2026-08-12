@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmation</title>
+  <style>
+    body { margin: 0; padding: 0; height: 100vh; min-height: 640px; overflow-y: auto; font-family: sans-serif; }
+    .page { position: relative; width: 100%; max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+    .step { display: none; width: 100%; flex-shrink: 0; }
+    .step.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="page active">
+    <!-- Step 2: Confirm -->
+    <div id="step-2" class="step active">
+        <img src="step2_confirm_sheet_bg.png" alt="Send Money Step 2" style="width: 100%; height: 100%; object-fit: fill; display: block;">
+        <div id="target-modal-amount-2" class="target-modal-amount" style="font-size: 24px; font-weight: bold; text-align: center; margin: 10px 0; position: absolute; top: 40%; left: 10%; width: 80%; height: 5%; color: #111; z-index: 15; display: flex; align-items: center; justify-content: center;">Amount ETB</div>
+        <div id="sub-balance-display-2" style="position: absolute; top: 55%; left: 10%; width: 80%; z-index: 15; text-align: center;"></div>
+        <div onclick="showStep('step-3'); setTimeout(() => showStep('step-4'), 2000);" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
+    </div>
+    
+    <!-- Spinner -->
+    <div id="step-3" class="step">
+        <img src="cbe_spinner.png" alt="Spinner" style="width: 100%; height: 100%; object-fit: fill; display: block;">
+    </div>
+    
+    <!-- Confirm Popup -->
+    <div id="step-4" class="step">
+        <img src="step4_confirm_popup_bg.png" alt="Send Money Step 4" style="width: 100%; height: 100%; object-fit: fill; display: block;">
+        <div id="target-modal-amount-4" class="target-modal-amount" style="font-size: 24px; font-weight: bold; text-align: center; margin: 10px 0; position: absolute; top: 45%; left: 10%; width: 80%; height: 5%; color: #111; z-index: 15; display: flex; align-items: center; justify-content: center;">Amount ETB</div>
+        <div onclick="showStep('step-5')" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
+    </div>
+    
+    <!-- PIN -->
+    <div id="step-5" class="step">
+        <!-- Note: step5_pin_authentication_bg.png was deleted, but keeping structure -->
+        <div id="target-modal-amount-5" class="target-modal-amount" style="font-size: 24px; font-weight: bold; text-align: center; margin: 10px 0; position: absolute; top: 45%; left: 10%; width: 80%; height: 5%; color: #111; z-index: 15; display: flex; align-items: center; justify-content: center;">Amount ETB</div>
+        <div style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;" onclick="showStep('step-6')"></div>
+    </div>
+    
+    <!-- Success -->
+    <div id="step-6" class="step">
+        <img src="step6_transaction_success_bg.png" alt="Send Money Step 6" style="width: 100%; height: 100%; object-fit: fill; display: block;">
+        <div id="target-modal-amount-6" class="target-modal-amount" style="font-size: 24px; font-weight: bold; text-align: center; margin: 10px 0; position: absolute; top: 45%; left: 10%; width: 80%; height: 5%; color: #111; z-index: 15; display: flex; align-items: center; justify-content: center;">Amount ETB</div>
+        <div onclick="showStep('step-7')" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
+    </div>
+    
+    <!-- Receipt -->
+    <div id="step-7" class="step">
+        <img src="step7_receipt_page.png" alt="Send Money Step 7" style="width: 100%; height: 100%; object-fit: fill; display: block;">
+        <div id="target-modal-amount-7" class="target-modal-amount" style="font-size: 24px; font-weight: bold; text-align: center; margin: 10px 0; position: absolute; top: 45%; left: 10%; width: 80%; height: 5%; color: #111; z-index: 15; display: flex; align-items: center; justify-content: center;">Amount ETB</div>
+        <div onclick="window.location.href='index.html'" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
+    </div>
+  </div>
+
+  <script>
+    function showStep(stepId) {
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      document.getElementById(stepId).classList.add('active');
+    }
+    
+    // Display amount
+    const amount = localStorage.getItem('transferAmount');
+    if (amount) {
+      document.querySelectorAll('.target-modal-amount').forEach(el => {
+          el.innerText = (amount ? amount : "0") + " ETB";
+      });
+    }
+
+    // Display sub-balance
+    const balance = localStorage.getItem('accountBalance');
+    if (balance) {
+      document.getElementById('sub-balance-display-2').innerHTML = `<span class="sub-balance-text" style="font-size: 12px; color: #777;">${balance} ETB</span>`;
+    }
+  </script>
+</body>
+</html>

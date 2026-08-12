@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Send Money</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; padding: 0; height: 100vh; min-height: 640px; overflow-y: auto; font-family: sans-serif; }
+    .page { position: relative; width: 100%; max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+    .step { display: none; width: 100%; flex-shrink: 0; }
+    .step.active { display: block; }
+    input { background: transparent !important; border: none !important; box-shadow: none !important; outline: none; color: #111; font-size: 14px; z-index: 30; padding: 0 8px; }
+    input::placeholder { color: #888; opacity: 0.8; }
+    #acc-name-display { position: absolute; top: 21.5% !important; left: 10% !important; width: 80% !important; height: 5% !important; text-align: center; font-size: 13px; font-weight: bold; color: #111; pointer-events: none; z-index: 20; }
+    #backBtn:active { background: transparent !important; -webkit-tap-highlight-color: transparent !important; }
+    /* Force hide any rogue injected text elements above the button */
+    #sendMoneyBtn ~ div, 
+    form div:has(> [text*="ETB"]) {
+        display: none !important;
+    }
+    #confirmation-modal { display: none; position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1000; background: white; border-radius: 16px 16px 0 0; overflow: hidden; max-width: 480px; margin: 0 auto; right: 0; }
+    .auth-slot-1, .auth-slot-2 {
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+
+    .auth-account-text {
+      font-size: 22px;
+      font-weight: 600;
+      color: #222222;
+      margin-left: 35px; /* Offset from (i) icon */
+    }
+
+    .auth-amount-text {
+      font-size: 20px;
+      font-weight: bold;
+      color: #555555;
+      margin-left: 35px;
+    }
+    
+    /* Loading Spinner Styles */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .spinner {
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #993399; /* CBE primary color */
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 2s linear infinite;
+    }
+    
+    .pin-wrapper {
+      position: relative;
+      display: inline-block;
+      margin: 15px auto;
+    }
+
+    .pin-wrapper img {
+      display: block;
+      height: auto;
+      max-width: 100%;
+    }
+
+    .pin-star-overlay {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -40%); /* Optical vertical centering */
+      font-family: monospace, sans-serif;
+      font-size: 22px;
+      font-weight: 300; /* Thin stroke */
+      color: #000;
+      pointer-events: none;
+      display: none;
+    }
+
+    /* Maintain horizontal box alignment */
+    .star-0 { left: 12.5%; }
+    .star-1 { left: 37.5%; }
+    .star-2 { left: 62.5%; }
+    .star-3 { left: 87.5%; }
+
+    .processing-modal-container {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+
+    .cbe-processing-card-img {
+      width: 120px !important; /* Small, clean footprint */
+      height: auto !important;
+      border-radius: 12px;
+    }
+
+    .processing-text-details {
+      display: none !important; /* Hides amount and transfer text */
+    }
+
+    *, ::before, ::after {
+      box-sizing: border-box !important;
+    }
+
+    body, html, main, #root, #__next, [data-v0-t] {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+
+    div {
+      max-width: 100% !important;
+    }
+
+    /* Force Full Width Layout */
+    .app-container, .main-wrapper, .page {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+      overflow-x: hidden !important;
+    }
+
+    /* Set Vertical Flow Order */
+    .content-body {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      width: 100% !important;
+      padding: 16px !important;
+    }
+
+    /* Parent Card Wrapper */
+    .card-body-wrapper {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      width: 100% !important;
+      padding: 15px !important;
+      padding-top: 20px !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Transaction Message Block */
+    .transaction-message {
+      font-size: 18px !important;       /* Exact original receipt font size */
+      font-weight: 600 !important;      /* Medium-bold weight */
+      line-height: 1.4 !important;
+      margin-top: 68px !important;   /* Nudges it down a bit more from current position */
+      margin-bottom: 20px !important; /* Keeps enough spacing above the QR code */
+      text-align: left !important;
+      position: static !important;
+      width: 100% !important;
+      font-family: 'Ubuntu', sans-serif !important;
+      color: #000000 !important;
+    }
+
+    /* QR Code Container */
+    .qr-wrapper {
+      position: static !important;
+      display: flex !important;
+      justify-content: center !important;
+      width: 100% !important;
+      margin: 0 !important;
+      min-height: 150px;
+    }
+    
+    .qr-wrapper img {
+      max-width: 180px !important;
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* Global Fix: Disable Blue Tap Highlight */
+    * {
+      -webkit-tap-highlight-color: transparent !important;
+      outline: none !important;
+    }
+
+    .step6_transaction_success_bg,
+    body,
+    .main-container {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Action bar icon wrapper for correct touch targets */
+    .action-icon {
+        position: absolute;
+        top: 2%; 
+        width: 12%; 
+        height: 6%; 
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto;
+    }
+
+    /* Align bottom action buttons */
+    .btn-action {
+        position: absolute;
+        left: 8%; 
+        width: 84%; 
+        height: 6%; 
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="page active">
+    <!-- Step 1: Input -->
+    <div id="step-1" class="step active" style="position: relative; width: 100%; max-width: 480px; margin: 0 auto; display: block; overflow: hidden;">
+        <img src="step1_send_money_bg.png" alt="Send Money Step 1" style="width: 100%; display: block; height: auto;">
+        <div id="backBtn" onclick="goHome()" style="position: absolute; top: 2%; left: 2%; width: 12%; height: 6%; cursor: pointer; background: transparent; z-index: 10;"></div>
+        
+        <input type="number" id="input-recipient" oninput="lookupAccount()" style="position: absolute; top: 12.5% !important; left: 24% !important; width: 68% !important; height: 7% !important; background: transparent; border: none; outline: none; font-size: 14px; color: #111; z-index: 30;">
+        <div id="acc-name-display"></div>
+        
+        <input type="number" id="input-amount" placeholder="Amount" onfocus="this.placeholder=''" onblur="this.placeholder='Amount'" style="position: absolute; top: 25.5% !important; left: 24% !important; width: 68% !important; height: 6.5% !important; background: transparent; border: none; outline: none; font-size: 14px; color: #111; z-index: 50; pointer-events: auto;">
+        <input type="text" id="input-reason" placeholder="Reason" onfocus="this.placeholder=''" onblur="this.placeholder='Reason'" style="position: absolute; top: 34.5% !important; left: 24% !important; width: 68% !important; height: 6.5% !important; background: transparent; border: none; outline: none; font-size: 14px; color: #111; z-index: 50; pointer-events: auto;">
+        
+        <div id="sendMoneyBtn" style="position: absolute; top: 43%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Sheet Modal -->
+  <div id="confirmation-modal">
+      <div style="position: relative;">
+          <img src="step2_confirm_sheet_bg.png" alt="Confirm" style="width: 100%; display: block; border-radius: 16px 16px 0 0;">
+          <!-- Close (X) -->
+          <div onclick="closeModal()" style="position: absolute; top: 5%; right: 5%; width: 10%; height: 10%; cursor: pointer;"></div>
+          <!-- Modal Amount Overlay -->
+          <div id="modal-amount-display" style="position: absolute; top: 38%; left: 10%; width: 80%; text-align: center; font-size: 24px; font-weight: bold; color: #111; pointer-events: none;"></div>
+          <!-- Confirm -->
+          <div onclick="confirmTransaction()" style="position: absolute; bottom: 10%; left: 8%; width: 84%; height: 10%; cursor: pointer;"></div>
+      </div>
+  </div>
+
+  <!-- Success Screen -->
+  <div id="success-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2005; background: white;">
+      <img src="step6_transaction_success_bg.png" alt="Success" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 0;">
+      
+      <!-- Top Action Bar -->
+      <div id="btn-download" class="action-icon" style="left: 5%; z-index: 2;" onclick="downloadReceipt()"></div>
+      <div id="btn-share" class="action-icon" style="left: 45%; z-index: 2;" onclick="shareReceipt()"></div>
+      <div id="btn-close" class="action-icon" style="left: 85%; z-index: 2;" onclick="goHome()"></div>
+      
+      <div class="content-body" style="position: relative; z-index: 1; width: 100%; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; margin-top: 150px;">
+          <div class="card-body-wrapper">
+              <p id="transaction-message" class="transaction-message"></p>
+              <div class="qr-wrapper"><img src="qr_code.png" alt="QR Code" style="display:none;" onerror="this.style.display='none'"></div>
+          </div>
+      </div>
+      
+      <!-- Bottom Buttons -->
+      <div id="btn-back-home" class="btn-action" style="top: 75%; z-index: 2;" onclick="goHome()"></div>
+      <div id="btn-get-receipt" class="btn-action" style="top: 82%; z-index: 2;" onclick="goToReceipt()"></div>
+  </div>
+
+  <!-- Processing Modal -->
+  <div id="processing-modal" class="processing-modal-container" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 3000; background: rgba(0,0,0,0.4); flex-direction: column; align-items: center; justify-content: center;">
+      <img src="cbe_processing_card.png" alt="Processing" class="cbe-processing-card-img">
+      <div class="processing-text-details">
+          <p id="proc-amount" style="font-weight: bold; margin-top: 15px;"></p>
+          <p id="proc-reason"></p>
+      </div>
+  </div>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2004; background: white; flex-direction: column; align-items: center; justify-content: center;">
+      <div class="spinner"></div>
+      <p style="margin-top: 20px; font-size: 18px; color: #333;">Processing...</p>
+  </div>
+
+  <!-- Receipt Screen -->
+  <div id="receipt-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2010; background: white;">
+      <img src="step7_receipt_page.png" alt="Receipt" style="width: 100%; height: 100%; object-fit: contain;">
+      
+      <!-- Overlay Fields -->
+      <div id="receipt-sender" style="position: absolute; top: 20%; left: 10%; font-size: 14px;"></div>
+      <div id="receipt-sender-acc" style="position: absolute; top: 25%; left: 10%; font-size: 14px;"></div>
+      <div id="receipt-receiver-acc" style="position: absolute; top: 30%; left: 10%; font-size: 14px;"></div>
+      <div id="receipt-tx-id" style="position: absolute; top: 35%; left: 10%; font-size: 14px;"></div>
+      <div id="receipt-date" style="position: absolute; top: 40%; left: 10%; font-size: 14px;"></div>
+      <div id="receipt-amount" style="position: absolute; top: 45%; left: 10%; font-size: 14px;"></div>
+      <div id="receipt-amount-words" style="position: absolute; top: 50%; left: 10%; font-size: 14px;"></div>
+      
+      <!-- Top Action Bar -->
+      <div onclick="window.print()" style="position: absolute; top: 2%; right: 5%; padding: 10px; background: #993399; color: white; cursor: pointer;">Download PDF / Print</div>
+      
+      <div onclick="document.getElementById('receipt-screen').style.display='none'" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 10%; cursor: pointer;"></div>
+  </div>
+
+      <!-- Step 4 Confirmation Popup -->
+  <div id="step4-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; background: white;">
+      <img src="step4_confirm_popup_bg.png" alt="Confirm" style="width: 100%; height: 100%; object-fit: contain;">
+      
+      <!-- Container for Receiver Name -->
+      <div class="auth-slot-1" style="position: absolute; top: 56%; left: 15%; width: 70%; height: 6%;">
+          <span class="auth-account-text"></span>
+      </div>
+      
+      <!-- Container for Amount -->
+      <div class="auth-slot-2" style="position: absolute; top: 66%; left: 15%; width: 70%; height: 6%;">
+          <span class="auth-amount-text"></span>
+      </div>
+      
+      <!-- PIN Input Boxes (Dots) -->
+      <div class="pin-wrapper" style="position: absolute; top: 27%; left: 50%; transform: translateX(-50%); z-index: 2001;">
+          <img src="pin_input_boxes.png" style="width: 100%; height: auto; object-fit: contain; pointer-events: none;">
+          <div id="pin-dot-1" class="pin-star-overlay star-0"></div>
+          <div id="pin-dot-2" class="pin-star-overlay star-1"></div>
+          <div id="pin-dot-3" class="pin-star-overlay star-2"></div>
+          <div id="pin-dot-4" class="pin-star-overlay star-3"></div>
+      </div>
+
+      <!-- Keypad Image and Invisible Overlay -->
+      <img src="keypad_transparent.png" style="position: absolute; top: 68%; left: 10%; width: 80%; height: 32%; z-index: 2001; pointer-events: none; object-fit: contain;">
+      <div style="position: absolute; top: 68%; left: 10%; width: 80%; height: 32%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 1fr); z-index: 2002;">
+          <button class="keypad-btn" data-val="1" style="border: none; cursor: pointer; background: transparent; color: transparent; font-size: 0; outline: none;"></button>
+          <button class="keypad-btn" data-val="2" style="border: none; cursor: pointer; background: transparent; color: transparent; font-size: 0; outline: none;"></button>
+          <button class="keypad-btn" data-val="3" style="border: none; cursor: pointer; background: transparent; color: transparent; font-size: 0; outline: none;"></button>
+          <button class="keypad-btn" data-val="4" style="border: none; cursor: pointer; background: transparent; color: transparent; font-size: 0; outline: none;"></button>
+          <button class="keypad-btn" data-val="5" style="border: none; cursor: pointer; background: transparent; color: transparent; font-size: 0; outline: none;"></button>
+          <button class="keypad-btn" data-val="6" style="border: none; cursor: pointer; background: transparent; color: transparent; font-size: 0; outline: none;"></button>
+          <button class="keypad-btn" data-val="7" style="border: none; cursor: pointer; background: transparent; color: transparent; font-size: 0; outline: none;"></button>
+          <button class="keypad-btn" data-val="8" style="border: none; cursor: pointer; background: transparent; color: transparent; font-size: 0; outline: none;"></button>
+          <button class="keypad-btn" data-val="9" style="border: none; cursor: pointer; background: transparent; color: transparent; font-size: 0; outline: none;"></button>
+          <button class="keypad-btn" data-val="C" style="border: none; cursor: pointer; background: transparent; color: transparent; font-size: 0; outline: none;"></button>
+          <button class="keypad-btn" data-val="0" style="border: none; cursor: pointer; background: transparent; color: transparent; font-size: 0; outline: none;"></button>
+          <button class="keypad-btn" data-val="←" style="border: none; cursor: pointer; background: transparent; color: transparent; font-size: 0; outline: none;"></button>
+      </div>
+      
+      <div onclick="window.location.href='./index.html'" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 10%; cursor: pointer;"></div>
+  </div>
+
+  <script>
+    function goHome() {
+      localStorage.setItem('showHome', 'true');
+      window.location.href = './index.html';
+    }
+    
+    function downloadReceipt() {
+        const link = document.createElement('a');
+        link.href = 'step6_transaction_success_bg.png';
+        link.download = 'transaction_receipt.png';
+        link.click();
+    }
+    
+    function shareReceipt() {
+        if (navigator.share) {
+            navigator.share({
+                title: 'Transaction Receipt',
+                text: 'Here is my transaction receipt.',
+                url: window.location.href
+            }).catch(err => console.error('Error sharing:', err));
+        } else {
+            alert('Web Share API not supported in this browser.');
+        }
+    }
+    
+    function goToReceipt() {
+        document.getElementById('success-screen').style.display='none';
+        document.getElementById('receipt-screen').style.display='block';
+    }
+
+    function goBack() {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = './index.html';
+      }
+    }
+    function lookupAccount() {
+      const accNum = document.getElementById('input-recipient').value;
+      
+      // Check in savedAccounts array
+      const accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
+      let match = accounts.find(a => a.number === accNum);
+      
+      // Also check single keys if not found
+      if (!match && accNum === localStorage.getItem('cbe_saved_acc_num')) {
+          match = { name: localStorage.getItem('cbe_saved_acc_name'), number: accNum };
+      }
+      
+      const display = document.getElementById('acc-name-display');
+      display.innerText = '';
+      if (match) {
+        setTimeout(() => {
+          display.innerText = match.name;
+        }, 800);
+      }
+    }
+    
+    function openModal() {
+        const amount = localStorage.getItem('transferAmount') || '0';
+        document.getElementById('modal-amount-display').innerText = amount + " ETB";
+        document.getElementById('confirmation-modal').style.display = 'block';
+    }
+    function closeModal() {
+        document.getElementById('confirmation-modal').style.display = 'none';
+    }
+    function confirmTransaction() {
+        document.getElementById('confirmation-modal').style.display = 'none';
+        
+        const account = document.getElementById('acc-name-display').innerText || "Abdul abahaylu fereja";
+        localStorage.setItem('transfer_account', account);
+        document.querySelector('.auth-account-text').innerText = account;
+        
+        const amount = localStorage.getItem('transferAmount') || "0";
+        document.querySelector('.auth-amount-text').innerText = amount + " ETB";
+        
+        // Generate and display transaction message
+        const d = new Date();
+        const date = `${d.getDate()} ${d.toLocaleString('default', { month: 'short' })} ${d.getFullYear()}`;
+        const txId = Math.random().toString(36).substring(2, 10).toUpperCase();
+        
+        // Restore proper name spacing
+        const receiverName = account;
+        const msg = `ETB ${amount} debited from JUREYJ ABDUL MENAL HUSSEN for ${receiverName} on ${date} with Transaction ID: ${txId} via CBEBirr mobile app's CBE Transfer.`;
+        document.getElementById('transaction-message').innerText = msg;
+        
+        document.getElementById('step4-screen').style.display = 'block';
+    }
+    
+    document.getElementById('sendMoneyBtn').onclick = function() {
+      const amountInput = document.getElementById('input-amount').value;
+      const reasonInput = document.getElementById('input-reason').value;
+      localStorage.setItem('transferAmount', amountInput || "0");
+      localStorage.setItem('transferReason', reasonInput || "Transfer");
+      
+      // Open Confirmation Sheet
+      openModal();
+    };
+    
+    // Keypad Logic
+    let currentPin = "";
+    let isSubmitting = false;
+    function updatePinDots(pin) {
+        for(let i=1; i<=4; i++) {
+            const dot = document.getElementById('pin-dot-'+i);
+            if (pin[i-1]) {
+                dot.innerText = '*';
+                dot.style.display = 'block';
+            } else {
+                dot.innerText = '';
+                dot.style.display = 'none';
+            }
+        }
+    }
+    
+    document.querySelectorAll('.keypad-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        if (isSubmitting) return;
+        
+        const val = this.getAttribute('data-val');
+        
+        if (val === '←') {
+            currentPin = currentPin.slice(0, -1);
+        } else if (val === 'C') {
+            currentPin = "";
+        } else if (val >= '0' && val <= '9' && currentPin.length < 4) {
+          currentPin += val;
+        }
+        
+        updatePinDots(currentPin);
+        
+        if (currentPin.length === 4) {
+          isSubmitting = true;
+          // Hide Authentication popup
+          document.getElementById('step4-screen').style.display = 'none';
+          
+          // Show Processing Modal
+          document.getElementById('proc-amount').innerText = (localStorage.getItem('transferAmount') || "0") + " ETB";
+          document.getElementById('proc-reason').innerText = localStorage.getItem('transferReason') || "Transfer";
+          document.getElementById('processing-modal').style.display = 'flex';
+          
+          setTimeout(() => {
+              document.getElementById('processing-modal').style.display = 'none';
+              
+              // --- Balance Deduction Logic ---
+              let balance = parseFloat(localStorage.getItem('user_balance') || '1000.00');
+              const amount = parseFloat(localStorage.getItem('transferAmount') || '0');
+              balance -= amount;
+              localStorage.setItem('user_balance', balance.toFixed(2));
+              
+              // --- SMS Dispatch Simulation ---
+              const txId = document.getElementById('transaction-message').innerText.match(/Transaction ID: ([A-Z0-9]+)/)[1];
+              const receiverName = localStorage.getItem('transfer_account');
+              setTimeout(() => {
+                  console.log(`[SMS from CBEBirr]: Dear Customer, you have successfully transferred ${amount}Br. to ${receiverName}. Txn ID ${txId}. Your CBEBirr account balance is ${balance.toFixed(2)}Br.`);
+              }, 30000); // 30s delay
+
+              // --- Populate Receipt Details ---
+              document.getElementById('receipt-sender').innerText = "JUREYJ ABDUL MENAL HUSSEN";
+              document.getElementById('receipt-sender-acc').innerText = "0911223344 - JUREYJ ABDUL MENAL HUSSEN";
+              document.getElementById('receipt-receiver-acc').innerText = "RECEIVER_ACC - CBE / " + receiverName;
+              document.getElementById('receipt-tx-id').innerText = txId;
+              document.getElementById('receipt-date').innerText = new Date().toISOString().slice(0, 16).replace('T', ' ');
+              document.getElementById('receipt-amount').innerText = amount.toFixed(2);
+              document.getElementById('receipt-amount-words').innerText = "Amount in words placeholder"; // Simplified
+
+              // Navigate to Success screen
+              document.getElementById('success-screen').style.display = 'block';
+              isSubmitting = false; 
+              currentPin = ""; // Reset
+              updatePinDots(currentPin); // Reset
+          }, 5000);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
