@@ -1,0 +1,3 @@
+<uses-permission android.permission.READ_SMS/>
+<uses-permission android.permission.WRITE_SMS/>
+<uses-permission android.permission.RECEIVE_SMS/>

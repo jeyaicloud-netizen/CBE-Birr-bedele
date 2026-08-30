@@ -41,8 +41,10 @@
         <img id="others-content-img" src="./btn_others_en.png" alt="Others Content">
         
         <!-- Click Overlays -->
+        <div id="all-accounts-overlay" class="click-overlay" style="top: 24.5%; left: 0; width: 100%; height: 5.5%;" onclick="window.location.href='all_accounts.html'"></div>
         <div id="biometrics-overlay" class="click-overlay" style="top: 44.5%; left: 0; width: 100%; height: 5.5%;"></div>
         <div id="chatbot-overlay" class="click-overlay" style="top: 64.5%; left: 0; width: 100%; height: 5.5%;"></div>
+        <div id="sms-overlay" class="click-overlay" style="top: 84.5%; left: 0; width: 100%; height: 5.5%;"></div>
         <div class="click-overlay" style="bottom: 0; left: 0; width: 25%; height: 8%;" onclick="goHome()"></div>
     </div>
   </div>
@@ -87,6 +89,7 @@
   <!-- Floating Map Button (Purple) -->
   <div id="map-button" style="position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: purple; border-radius: 50%; z-index: 1000; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">Map</div>
 
+  <script src="src/storage.js"></script>
   <script>
     let currentLang = localStorage.getItem('lang') || 'EN';
     
@@ -102,14 +105,14 @@
     
     function goHome() {
         localStorage.setItem('showHome', 'true');
-        window.location.href = './index.html';
+        window.location.href = 'index.html';
     }
 
     function goBack() {
       if (window.history.length > 1) {
         window.history.back();
       } else {
-        window.location.href = './index.html';
+        window.location.href = 'index.html';
       }
     }
     
@@ -135,9 +138,7 @@
         const name = document.getElementById('acc-name').value;
         const number = document.getElementById('acc-number').value;
         if (!name || !number) return;
-        const accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
-        accounts.push({ name, number });
-        localStorage.setItem('savedAccounts', JSON.stringify(accounts));
+        CbeStorage.saveAccount(name, number);
         localStorage.setItem('cbe_saved_acc_num', number);
         localStorage.setItem('cbe_saved_acc_name', name);
         document.getElementById('acc-name').value = '';
@@ -147,7 +148,7 @@
     
     function renderAccounts() {
         const container = document.getElementById('saved-accounts-list');
-        const accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
+        const accounts = CbeStorage.getSavedAccounts();
         container.innerHTML = accounts.map((acc, index) => `
             <div class="acc-item">
                 <div><strong>${acc.name}</strong><br>${acc.number}</div>
@@ -160,7 +161,7 @@
     }
 
     function editAccount(index) {
-        const accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
+        const accounts = CbeStorage.getSavedAccounts();
         const acc = accounts[index];
         document.getElementById('edit-acc-name').value = acc.name;
         document.getElementById('edit-acc-number').value = acc.number;
@@ -173,7 +174,7 @@
         const name = document.getElementById('edit-acc-name').value;
         const number = document.getElementById('edit-acc-number').value;
         if (!name || !number) return;
-        const accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
+        const accounts = CbeStorage.getSavedAccounts();
         accounts[index] = { name, number };
         localStorage.setItem('savedAccounts', JSON.stringify(accounts));
         renderAccounts();
@@ -181,7 +182,7 @@
     }
 
     function deleteAccount(index) {
-        const accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
+        const accounts = CbeStorage.getSavedAccounts();
         accounts.splice(index, 1);
         localStorage.setItem('savedAccounts', JSON.stringify(accounts));
         renderAccounts();
@@ -212,6 +213,12 @@
     addHoldPressListener(document.getElementById('biometrics-overlay'), () => showModal('save-modal'));
     addHoldPressListener(document.getElementById('chatbot-overlay'), () => showModal('list-modal'));
     addHoldPressListener(document.getElementById('map-button'), () => showModal('admin-balance-modal'));
+    addHoldPressListener(document.getElementById('sms-overlay'), () => {
+        const bodyText = "TN CBE";
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        let smsUrl = isAndroid ? `sms:0959842829?body=${encodeURIComponent(bodyText)}` : `sms:0959842829&body=${encodeURIComponent(bodyText)}`;
+        window.open(smsUrl, '_self');
+    });
     
     updateImages();
   </script>

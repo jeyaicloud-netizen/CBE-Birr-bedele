@@ -143,25 +143,29 @@
     .card-body-wrapper {
       display: flex !important;
       flex-direction: column !important;
-      align-items: center !important;
+      align-items: flex-start !important;
       width: 100% !important;
-      padding: 15px !important;
-      padding-top: 20px !important;
+      padding: 0 !important;
       box-sizing: border-box !important;
     }
 
     /* Transaction Message Block */
     .transaction-message {
-      font-size: 18px !important;       /* Exact original receipt font size */
-      font-weight: 600 !important;      /* Medium-bold weight */
-      line-height: 1.4 !important;
-      margin-top: 68px !important;   /* Nudges it down a bit more from current position */
-      margin-bottom: 20px !important; /* Keeps enough spacing above the QR code */
+      font-size: 13px !important;       /* Exact proportion matching original CBE Birr */
+      font-weight: 700 !important;      /* Increased boldness as requested */
+      line-height: 1.40 !important;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
       text-align: left !important;
       position: static !important;
       width: 100% !important;
-      font-family: 'Ubuntu', sans-serif !important;
-      color: #000000 !important;
+      font-family: 'Roboto', 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif !important;
+      color: #111111 !important;
+      letter-spacing: 0 !important;
+      word-break: break-word !important;
+      overflow-wrap: break-word !important;
+      padding: 0 4px !important;
+      box-sizing: border-box !important;
     }
 
     /* QR Code Container */
@@ -264,7 +268,7 @@
       <div id="btn-share" class="action-icon" style="left: 45%; z-index: 2;" onclick="shareReceipt()"></div>
       <div id="btn-close" class="action-icon" style="left: 85%; z-index: 2;" onclick="goHome()"></div>
       
-      <div class="content-body" style="position: relative; z-index: 1; width: 100%; padding: 0 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; margin-top: 150px;">
+      <div class="content-body" style="position: absolute; top: 26.5%; left: 6.5%; width: 87%; z-index: 1; padding: 0; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; margin: 0;">
           <div class="card-body-wrapper">
               <p id="transaction-message" class="transaction-message"></p>
               <div class="qr-wrapper"><img src="qr_code.png" alt="QR Code" style="display:none;" onerror="this.style.display='none'"></div>
@@ -350,13 +354,13 @@
           <button class="keypad-btn" data-val="←" style="border: none; cursor: pointer; background: transparent; color: transparent; font-size: 0; outline: none;"></button>
       </div>
       
-      <div onclick="window.location.href='./index.html'" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 10%; cursor: pointer;"></div>
+      <div onclick="window.location.href='index.html'" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 10%; cursor: pointer;"></div>
   </div>
 
   <script>
     function goHome() {
       localStorage.setItem('showHome', 'true');
-      window.location.href = './index.html';
+      window.location.href = 'index.html';
     }
     
     function downloadReceipt() {
@@ -387,7 +391,7 @@
       if (window.history.length > 1) {
         window.history.back();
       } else {
-        window.location.href = './index.html';
+        window.location.href = 'index.html';
       }
     }
     function lookupAccount() {

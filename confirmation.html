@@ -23,7 +23,7 @@
     
     <!-- Spinner -->
     <div id="step-3" class="step">
-        <img src="cbe_spinner.png" alt="Spinner" style="width: 100%; height: 100%; object-fit: fill; display: block;">
+        <img src="loading_spinner.png" alt="Spinner" style="width: 100%; height: 100%; object-fit: fill; display: block;">
     </div>
     
     <!-- Confirm Popup -->
@@ -43,15 +43,37 @@
     <!-- Success -->
     <div id="step-6" class="step">
         <img src="step6_transaction_success_bg.png" alt="Send Money Step 6" style="width: 100%; height: 100%; object-fit: fill; display: block;">
-        <div id="target-modal-amount-6" class="target-modal-amount" style="font-size: 24px; font-weight: bold; text-align: center; margin: 10px 0; position: absolute; top: 45%; left: 10%; width: 80%; height: 5%; color: #111; z-index: 15; display: flex; align-items: center; justify-content: center;">Amount ETB</div>
+        <div id="target-modal-amount-6" class="target-modal-amount" style="font-size: 32px; font-weight: bold; text-align: center; margin: 0; position: absolute; top: 36.5%; left: 10%; width: 80%; height: 6%; color: #111; z-index: 15; display: flex; align-items: center; justify-content: center;">Amount ETB</div>
         <div onclick="showStep('step-7')" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
     </div>
     
     <!-- Receipt -->
-    <div id="step-7" class="step">
+    <div id="step-7" class="step" style="position: relative;">
         <img src="step7_receipt_page.png" alt="Send Money Step 7" style="width: 100%; height: 100%; object-fit: fill; display: block;">
-        <div id="target-modal-amount-7" class="target-modal-amount" style="font-size: 24px; font-weight: bold; text-align: center; margin: 10px 0; position: absolute; top: 45%; left: 10%; width: 80%; height: 5%; color: #111; z-index: 15; display: flex; align-items: center; justify-content: center;">Amount ETB</div>
-        <div onclick="window.location.href='index.html'" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
+        <!-- Clean White Card Cover over receipt (covering all background text, notes, and dots) -->
+        <div style="position: absolute; top: 30.5%; left: 5.5%; width: 89%; height: 26.5%; background: #ffffff; border-radius: 12px; padding: 14px 18px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; justify-content: space-between; z-index: 50; box-sizing: border-box;">
+            <div id="receipt-amount-conf" class="target-modal-amount" style="text-align: center; font-size: 24px; font-weight: 800; color: #8e24aa; letter-spacing: -0.5px; padding-bottom: 2px;"></div>
+            <div style="width: 100%; height: 1px; background: #eee; margin: 4px 0 6px 0;"></div>
+            <div style="display: flex; flex-direction: column; gap: 7px; flex: 1; justify-content: center;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; line-height: 1.3;">
+                    <span style="color: #6b7280; font-weight: 500;">የተቀባይ ሂሳብ (Account)</span>
+                    <span id="receipt-account-conf" style="color: #111827; font-weight: 700; text-align: right; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">100012345678</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; line-height: 1.3;">
+                    <span style="color: #6b7280; font-weight: 500;">የተቀባይ ስም (Name)</span>
+                    <span id="receipt-recipient-conf" style="color: #111827; font-weight: 700; text-align: right; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">RECIPIENT</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; line-height: 1.3;">
+                    <span style="color: #6b7280; font-weight: 500;">የግብይት ቁጥር (Txn ID)</span>
+                    <span id="receipt-txnid-conf" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 600; color: #4b5563; font-size: 11.5px; text-align: right;">DHH849201PM</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; line-height: 1.3;">
+                    <span style="color: #6b7280; font-weight: 500;">ቀንና ሰዓት (Date & Time)</span>
+                    <span id="receipt-date-conf" style="color: #111827; font-weight: 700; font-size: 12px; text-align: right;"></span>
+                </div>
+            </div>
+        </div>
+        <div onclick="window.location.href='index.html'" style="position: absolute; bottom: 6.5%; left: 8%; width: 84%; height: 6.5%; z-index: 60; cursor: pointer; background: transparent;"></div>
     </div>
   </div>
 
@@ -65,8 +87,20 @@
     const amount = localStorage.getItem('transferAmount');
     if (amount) {
       document.querySelectorAll('.target-modal-amount').forEach(el => {
-          el.innerText = (amount ? amount : "0") + " ETB";
+          el.innerText = (amount ? parseFloat(amount).toFixed(2) : "0.00") + " ETB";
       });
+    }
+
+    const recAcc = localStorage.getItem('transferRecipientAcc') || localStorage.getItem('txnAccount');
+    if (recAcc && document.getElementById('receipt-account-conf')) {
+      document.getElementById('receipt-account-conf').textContent = recAcc;
+    }
+    const recName = localStorage.getItem('transfer_account');
+    if (recName && document.getElementById('receipt-recipient-conf')) {
+      document.getElementById('receipt-recipient-conf').textContent = recName;
+    }
+    if (document.getElementById('receipt-date-conf')) {
+      document.getElementById('receipt-date-conf').textContent = new Date().toLocaleString();
     }
 
     // Display sub-balance

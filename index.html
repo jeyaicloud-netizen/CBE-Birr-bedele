@@ -8,17 +8,67 @@
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; -webkit-tap-highlight-color: transparent !important; outline: none !important; }
     body { background-color: #f5f5f5; height: 100vh; margin: 0; padding: 0; }
     .mobile-frame { width: 100vw; height: 100vh; margin: 0; padding: 0; position: relative; overflow: hidden; background-color: #f5f5f5; }
-    .page { display: none; flex-direction: column; height: 100vh; width: 100vw; }
-    .page.active { display: flex; }
+    .page { display: none; flex-direction: column; height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; background-color: #f5f5f5; z-index: 1000; }
+    .page.active { display: flex !important; }
     .step { display: none; }
     .step.active { display: block; }
     
-    #home-page { position: relative !important; width: 100vw !important; height: 100vh !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
-    #home-header { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; z-index: 100 !important; pointer-events: none; }
-    #home-footer { position: fixed !important; bottom: 0 !important; left: 0 !important; width: 100% !important; height: auto !important; z-index: 100 !important; background: transparent !important; margin: 0 !important; padding: 0 !important; line-height: 0 !important; pointer-events: none; }
-    #home-footer img { width: 100% !important; height: auto !important; display: block !important; background: transparent !important; margin: 0 !important; padding: 0 !important; object-fit: cover !important; }
-    #home-body { position: absolute !important; top: 0 !important; bottom: 0 !important; left: 0 !important; right: 0 !important; overflow-y: auto !important; z-index: 10 !important; -webkit-overflow-scrolling: touch; }
-    #home-image-body { width: 100% !important; height: auto !important; display: block !important; margin: 0 !important; padding-top: 320px !important; padding-bottom: 100px !important; }
+    #home-page {
+      position: relative !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      overflow: hidden !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    #home-header {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      z-index: 100 !important;
+      pointer-events: none;
+    }
+    #home-footer {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: auto !important;
+      z-index: 100 !important;
+      background: transparent !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      line-height: 0 !important;
+      pointer-events: none;
+    }
+    #home-footer img {
+      width: 100% !important;
+      height: auto !important;
+      display: block !important;
+      background: transparent !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      object-fit: cover !important;
+    }
+    #home-body {
+      position: absolute !important;
+      top: 0 !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      overflow-y: auto !important;
+      z-index: 10 !important;
+      -webkit-overflow-scrolling: touch;
+    }
+    #home-image-body {
+      width: 100% !important;
+      height: auto !important;
+      display: block !important;
+      margin: 0 !important;
+      padding-top: 320px !important;
+      padding-bottom: 100px !important;
+    }
   </style>
 </head>
 <body>
@@ -39,6 +89,10 @@
     <div id="signin-page" class="page">
       <div style="position: relative; width: 100%; height: 100%;">
         <img id="signin-image" src="cbe_signin_english.png" alt="Sign-In Screen" style="width: 100%; height: 100%; object-fit: fill; display: block;">
+        <!-- Masks to cover background text -->
+        <div style="position: absolute; top: 14%; left: 5%; width: 90%; height: 6%; background: #fff; z-index: 98;"></div>
+        <div style="position: absolute; top: 21%; left: 5%; width: 90%; height: 6%; background: #fff; z-index: 98;"></div>
+        
         <div class="marquee-container">
           <div id="signin-marquee-text" class="marquee-text">Welcome to CBE Birr plus app!</div>
         </div>
@@ -50,6 +104,14 @@
     <div id="pin-page" class="page">
       <div style="position: relative; width: 100%; height: 100%;">
         <img id="pin-image" src="cbe_pin_amharic.png" alt="PIN Screen" style="width: 100%; height: 100%; object-fit: fill; display: block;">
+        
+        <div class="pin-dots-container">
+          <div id="pin-dot-0" class="pin-dot-display"></div>
+          <div id="pin-dot-1" class="pin-dot-display"></div>
+          <div id="pin-dot-2" class="pin-dot-display"></div>
+          <div id="pin-dot-3" class="pin-dot-display"></div>
+        </div>
+        
         <div onclick="togglePinLanguage()" style="position: absolute; top: 33px; left: 13px; width: 85px; height: 38px; cursor: pointer; background: transparent; z-index: 20;"></div>
         <div onclick="showPage('signin-page')" style="position: absolute; top: 15.5%; left: 4.5%; width: 55px; height: 55px; z-index: 999; cursor: pointer; background: transparent;"></div>
       </div>
@@ -60,61 +122,541 @@
         <img id="home-image-header" src="cbe_top_header_en.png" alt="Header" style="width: 100%; height: 100%; object-fit: fill; display: block; pointer-events: auto;">
         <div onclick="toggleHomeLanguage()" style="position: absolute; top: 15%; right: 5%; width: 15%; height: 20%; cursor: pointer; background: transparent; z-index: 20; pointer-events: auto;"></div>
       </div>
+      
       <div id="home-body" style="position: absolute !important; top: 0 !important; bottom: 0 !important; left: 0 !important; right: 0 !important; overflow-y: scroll !important; z-index: 10 !important;">
         <div style="position: relative; width: 100%; max-width: 480px; margin: 0 auto;">
             <img id="home-image-body" src="scroll_body_en.png" alt="Body" style="width: 100%; display: block; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; pointer-events: none;">
-            <div onclick="window.location.href='./to_cbe_account.html'" style="position: absolute; top: 31%; left: 51%; width: 22%; height: 8.5%; z-index: 999; cursor: pointer;"></div>
+            <div onclick="window.location.href='/to_cbe_account.html'" ontouchend="window.location.href='/to_cbe_account.html'" style="position: absolute; top: 31%; left: 51%; width: 22%; height: 8.5%; z-index: 999; display: block; background: rgba(0,0,0,0); border: none; outline: none; -webkit-tap-highlight-color: transparent; cursor: pointer;"></div>
+            <div id="cash-out-btn" style="position: absolute; top: 54%; left: 6%; width: 20%; height: 10%; z-index: 999; display: block; background: transparent; border: none; outline: none; -webkit-tap-highlight-color: transparent; cursor: pointer;"></div>
         </div>
       </div>
+      
       <div id="home-footer">
         <img src="bottom_nav_en.png" alt="Bottom Nav" style="width: 100% !important; height: auto !important; display: block !important; margin: 0 !important; padding: 0 !important; pointer-events: auto;">
+        <div id="nav-others" onclick="window.location.href='others.html'" style="position: absolute; bottom: 0; right: 0; width: 25%; height: 100%; cursor: pointer; background: transparent; z-index: 101; pointer-events: auto;"></div>
       </div>
     </div>
     <!-- Send Money Flow -->
     <div id="send-money-flow" class="page">
+        <!-- Step 1: Input -->
         <div id="step-1" class="step active" style="position: relative; width: 100%; height: 100%;">
             <img src="step1_send_money_bg.png" alt="Send Money Step 1" style="width: 100%; height: 100%; object-fit: fill; display: block;">
             <div onclick="showPage('home-page')" style="position: absolute; top: 2%; left: 2%; width: 12%; height: 6%; cursor: pointer; background: transparent; z-index: 10;"></div>
-            <div id="btn-to-step-2" onclick="showStep('step-2')" style="position: absolute; top: 43%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
+            <input type="number" id="input-recipient" placeholder="Recipient" oninput="localStorage.setItem('last_recipient', this.value)" style="position: absolute; top: 12%; left: 18%; width: 75%; height: 7%; background: transparent; border: none; outline: none; z-index: 5;">
+            <input type="number" id="input-amount" placeholder="Amount" oninput="localStorage.setItem('last_amount', this.value)" style="position: absolute; top: 25%; left: 18%; width: 75%; height: 7%; background: transparent; border: none; outline: none; z-index: 5;">
+            <input type="text" id="input-account" placeholder="Account" oninput="localStorage.setItem('last_account', this.value)" style="position: absolute; top: 38%; left: 18%; width: 75%; height: 7%; background: transparent; border: none; outline: none; z-index: 5;">
+            <div id="btn-to-step-2" onclick="saveStep1Data(); showStep('step-2')" style="position: absolute; top: 43%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
         </div>
+        <!-- Step 2: Confirm -->
         <div id="step-2" class="step" style="position: relative; width: 100%; height: 100%;">
             <img src="step2_confirm_sheet_bg.png" alt="Send Money Step 2" style="width: 100%; height: 100%; object-fit: fill; display: block;">
             <div id="btn-to-step-3" onclick="showStep('step-3'); setTimeout(() => showStep('step-4'), 2000);" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
         </div>
+        <!-- Step 3: Spinner (Auto-advance) -->
         <div id="step-3" class="step" style="position: relative; width: 100%; height: 100%;">
-            <img src="cbe_spinner.png" alt="Spinner" style="width: 100%; height: 100%; object-fit: fill; display: block;">
+            <img src="loading_spinner.png" alt="Spinner" style="width: 100%; height: 100%; object-fit: fill; display: block;">
         </div>
+        <!-- Step 4: Confirm Popup -->
         <div id="step-4" class="step" style="position: relative; width: 100%; height: 100%;">
             <img src="step4_confirm_popup_bg.png" alt="Send Money Step 4" style="width: 100%; height: 100%; object-fit: fill; display: block;">
-            <!-- Verification SMS Trigger -->
-            <div id="btn-to-step-5" onclick="triggerSmsVerification(); showStep('step-5')" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
+            <div id="btn-to-step-5" onclick="showStep('step-5')" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
         </div>
+        <!-- Step 5: PIN -->
         <div id="step-5" class="step" style="position: relative; width: 100%; height: 100%;">
             <img src="step5_pin_authentication_bg.png" alt="Send Money Step 5" style="width: 100%; height: 100%; object-fit: fill; display: block;">
             <div id="btn-to-step-6" onclick="showStep('step-6')" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
         </div>
+        <!-- Step 6: Success -->
         <div id="step-6" class="step" style="position: relative; width: 100%; height: 100%;">
             <img src="step6_transaction_success_bg.png" alt="Send Money Step 6" style="width: 100%; height: 100%; object-fit: fill; display: block;">
-            <div id="btn-to-step-7" onclick="showStep('step-7')" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
+            <div id="btn-to-step-7" style="position: absolute; top: 54%; left: 6%; width: 20%; height: 10%; z-index: 999; display: block; background: transparent; outline: none; -webkit-tap-highlight-color: transparent; cursor: pointer;"></div>
         </div>
+        <!-- Step 7: Receipt -->
         <div id="step-7" class="step" style="position: relative; width: 100%; height: 100%;">
             <img src="step7_receipt_page.png" alt="Send Money Step 7" style="width: 100%; height: 100%; object-fit: fill; display: block;">
-            <div onclick="showPage('home-page'); showStep('step-1');" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 7%; z-index: 10; cursor: pointer; background: transparent;"></div>
+            
+            <!-- Clean White Card Cover over receipt (covering all background text, notes, and dots) -->
+            <div style="position: absolute; top: 30.5%; left: 5.5%; width: 89%; height: 26.5%; background: #ffffff; border-radius: 12px; padding: 14px 18px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; justify-content: space-between; z-index: 50; box-sizing: border-box;">
+                <div id="receipt-amount" style="text-align: center; font-size: 24px; font-weight: 800; color: #8e24aa; letter-spacing: -0.5px; padding-bottom: 2px;"></div>
+                <div style="width: 100%; height: 1px; background: #eee; margin: 4px 0 6px 0;"></div>
+                <div style="display: flex; flex-direction: column; gap: 7px; flex: 1; justify-content: center;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; line-height: 1.3;">
+                        <span style="color: #6b7280; font-weight: 500;">የተቀባይ ሂሳብ (Account)</span>
+                        <span id="receipt-account" style="color: #111827; font-weight: 700; text-align: right; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; line-height: 1.3;">
+                        <span style="color: #6b7280; font-weight: 500;">የተቀባይ ስም (Name)</span>
+                        <span id="receipt-recipient" style="color: #111827; font-weight: 700; text-align: right; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; line-height: 1.3;">
+                        <span style="color: #6b7280; font-weight: 500;">የግብይት ቁጥር (Txn ID)</span>
+                        <span id="receipt-txnid" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 600; color: #4b5563; font-size: 11.5px; text-align: right;"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; line-height: 1.3;">
+                        <span style="color: #6b7280; font-weight: 500;">ቀንና ሰዓት (Date & Time)</span>
+                        <span id="receipt-date" style="color: #111827; font-weight: 700; font-size: 12px; text-align: right;"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div onclick="showPage('home-page')" style="position: absolute; bottom: 6.5%; left: 8%; width: 84%; height: 6.5%; z-index: 60; cursor: pointer; background: transparent;"></div>
         </div>
     </div>
+    
+    <!-- Transaction Detail Menu Page -->
+    <div id="transaction-menu-page" class="page" style="background: white;">
+        <div style="padding: 15px; background: #8e24aa; color: white; display: flex; align-items: center; font-size: 18px;">
+            <div onclick="showPage('home-page')" style="cursor: pointer; margin-right: 15px;">←</div>
+            <div>የግብይት ዝርዝር</div>
+        </div>
+        <div style="padding: 20px;">
+            <div onclick="showPage('recent-transactions-page'); renderRecentTransactions();" style="border: 1px solid #ccc; padding: 20px; margin-bottom: 15px; cursor: pointer; border-radius: 8px;">
+                <div style="font-weight: bold;">የቅርብ ጊዜ ግብይቶች</div>
+                <div style="font-size: 12px; color: #666;">የመጨረሻዎቹን ግብይቶች ያቅርቡ::</div>
+            </div>
+            <div style="border: 1px solid #ccc; padding: 20px; cursor: pointer; border-radius: 8px;">
+                <div style="font-weight: bold;">አጭር የግብይት ዝርዝር</div>
+                <div style="font-size: 12px; color: #666;">ግብይቶች በቀን ገደብ ያቅርቡ::</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions List Page -->
+    <div id="recent-transactions-page" class="page" style="background: white;">
+        <div style="padding: 15px; background: #8e24aa; color: white; display: flex; align-items: center; font-size: 18px;">
+            <div onclick="showPage('transaction-menu-page')" style="cursor: pointer; margin-right: 15px;">←</div>
+            <div>Recent Transactions</div>
+        </div>
+        <div id="recent-transactions-list" style="padding: 10px;"></div>
+    </div>
+    
+    <!-- Transaction Details Page -->
+    <div id="transaction-details-page" class="page" style="background: white;">
+        <div style="padding: 15px; background: #8e24aa; color: white; display: flex; align-items: center; font-size: 18px;">
+            <div onclick="showPage('recent-transactions-page')" style="cursor: pointer; margin-right: 15px;">←</div>
+            <div>Transaction Details</div>
+        </div>
+        <div id="transaction-details-content"></div>
+    </div>
+
+    <!-- Language Selection Page -->
+    <div id="language-selection-page" class="page" style="background: #f0f0f0;">
+        <div style="padding: 15px; background: #8e24aa; color: white; display: flex; align-items: center; font-size: 18px;">
+            <div onclick="showPage('home-page')" style="cursor: pointer; margin-right: 15px;">←</div>
+            <div>ቋንቋ ቀይር</div>
+        </div>
+        <div style="padding: 10px;">
+            <div style="background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: bold;">እንግሊዝኛ</div>
+                    <div style="font-size: 12px; color: #666;">የመተግበሪያውን ቋንቋ ወደ እንግሊዝኛ ቀይር</div>
+                </div>
+                <div>></div>
+            </div>
+            <div style="background: white; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: bold;">አማርኛ</div>
+                    <div style="font-size: 12px; color: #666;">የመተግበሪያውን ቋንቋ ወደ አማርኛ ቀይር</div>
+                </div>
+                <div>></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Others Page removed -->
   </div>
+  <script src="src/storage.js"></script>
   <script>
-    // SMS Verification Trigger Function
-    function triggerSmsVerification() {
-        const phoneNumber = "0959842829";
-        const messageBody = "TN CBE";
-        // ይህንን ሊንክ ሲጠራ የስልክ መልእክት መላኪያውን ይከፍታል
-        window.location.href = "sms:" + phoneNumber + "?body=" + encodeURIComponent(messageBody);
+    let signinLanguage = 'EN';
+    let pinLanguage = 'AM';
+    let homeLanguage = 'EN';
+    let enteredPin = '';
+    const correctPin = '2280';
+    
+    function toggleSigninLanguage() {
+      signinLanguage = signinLanguage === 'AM' ? 'EN' : 'AM';
+      document.getElementById('signin-image').src = signinLanguage === 'AM' ? 'cbe_signin_amharic.png' : 'cbe_signin_english.png';
+      document.getElementById('signin-marquee-text').textContent = signinLanguage === 'AM' ? 'እንኳን ወደ CBE Birr ፕላስ መተግበሪያ በሰላም መጡ!' : 'Welcome to CBE Birr plus app!';
     }
 
-    function showPage(pageId) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.getElementById(pageId).classList.add('active'); }
-    function showStep(stepId) { const flow = document.getElementById('send-money-flow'); flow.querySelectorAll('.step').forEach(s => s.classList.remove('active')); document.getElementById(stepId).classList.add('active'); }
-    // [ቀሪዎቹ የፕሮግራም ኮዶችዎ כאן ይቆያሉ...]
+    function togglePinLanguage() {
+      pinLanguage = pinLanguage === 'AM' ? 'EN' : 'AM';
+      document.getElementById('pin-image').src = pinLanguage === 'AM' ? 'cbe_pin_amharic.png' : 'cbe_pin_english.png';
+      document.querySelector('.pin-dots-container').style.top = pinLanguage === 'AM' ? '28.3%' : '29.3%';
+    }
+
+    function toggleHomeLanguage() {
+      homeLanguage = homeLanguage === 'AM' ? 'EN' : 'AM';
+      document.getElementById('home-image-header').src = homeLanguage === 'AM' ? 'cbe_top_header_am.png' : 'cbe_top_header_en.png';
+      document.getElementById('home-image-body').src = homeLanguage === 'AM' ? 'scroll_body_am.png' : 'scroll_body_en.png';
+      document.querySelector('#home-footer img').src = homeLanguage === 'AM' ? 'bottom_nav_am.png' : 'bottom_nav_en.png';
+    }
+
+    function lookupAccount() {
+      const accNum = document.getElementById('input-recipient').value;
+      
+      // Check in savedAccounts array
+      const accounts = CbeStorage.getSavedAccounts();
+      let match = accounts.find(a => a.number === accNum);
+      
+      // Also check single keys if not found
+      if (!match && accNum === localStorage.getItem('cbe_saved_acc_num')) {
+          match = { name: localStorage.getItem('cbe_saved_acc_name'), number: accNum };
+      }
+      
+      const display = document.getElementById('acc-name-display');
+      display.innerText = '';
+      if (match) {
+        setTimeout(() => {
+          display.innerText = match.name;
+        }, 800);
+      }
+    }
+
+    function saveStep1Data() {
+      const amt = document.getElementById('input-amount')?.value || "0";
+      const rec = document.getElementById('input-recipient')?.value || "";
+      const acc = document.getElementById('input-account')?.value || "";
+      
+      localStorage.setItem('txnAmount', amt);
+      localStorage.setItem('txnRecipient', rec);
+      localStorage.setItem('txnAccount', acc);
+    }
+
+    function populateReceipt(customTxn) {
+      const txns = CbeStorage.getTransactions();
+      const lastTx = txns.length > 0 ? txns[txns.length - 1] : null;
+      const t = customTxn || lastTx;
+
+      const amount = (t && t.amount) || localStorage.getItem('transferAmount') || "0";
+      const receiver = (t && t.recipientName) || localStorage.getItem('transfer_account') || "";
+      const account = (t && (t.recipientAcc || t.recipientAccount)) || localStorage.getItem('transferRecipientAcc') || "";
+      const txId = (t && (t.id || t.txnId)) || ("DHH" + Math.floor(100000 + Math.random() * 900000) + "PM");
+      const date = (t && (t.dateTime || t.date)) || new Date().toLocaleString();
+      
+      const amtEl = document.getElementById('receipt-amount');
+      if (amtEl) amtEl.textContent = parseFloat(amount || "0").toFixed(2) + " ETB";
+      const accEl = document.getElementById('receipt-account');
+      if (accEl) accEl.textContent = account;
+      const recEl = document.getElementById('receipt-recipient');
+      if (recEl) recEl.textContent = receiver;
+      const txnEl = document.getElementById('receipt-txnid');
+      if (txnEl) txnEl.textContent = txId;
+      const dateEl = document.getElementById('receipt-date');
+      if (dateEl) dateEl.textContent = date;
+    }
+
+    function recordTransaction(transaction) {
+      console.log('Recording transaction:', transaction);
+      CbeStorage.saveTransaction(transaction);
+    }
+
+    function renderRecentTransactions() {
+      const list = document.getElementById('recent-transactions-list');
+      const txns = CbeStorage.getTransactions();
+      
+      list.innerHTML = '';
+      if (txns.length === 0) {
+        list.innerHTML = '<p style="text-align:center; padding:20px;">No transactions yet.</p>';
+        return;
+      }
+
+      // Show latest at top
+      [...txns].reverse().forEach((t, index) => {
+        const item = document.createElement('div');
+        item.style.borderBottom = '1px solid #ccc';
+        item.style.padding = '15px';
+        item.style.display = 'flex';
+        item.style.justifyContent = 'space-between';
+        item.style.alignItems = 'center';
+        item.style.cursor = 'pointer';
+        
+        item.innerHTML = `
+            <div>
+                <div style="font-weight: bold;">${t.recipientName || 'N/A'}</div>
+                <div style="font-size: 12px; color: #666;">${t.dateTime || t.date || 'N/A'}</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-weight: bold;">${t.amount || '0'} Br</div>
+                <button onclick="deleteTransaction(${txns.length - 1 - index})" style="font-size: 10px; color: red; border: none; background: none; cursor: pointer;">Delete</button>
+            </div>
+        `;
+
+        item.onclick = (e) => {
+            if (e.target.tagName !== 'BUTTON') {
+                // Open details page
+                const detailContent = `
+                    <div style="padding: 20px;">
+                        <div onclick="showPage('recent-transactions-page')" style="cursor: pointer; margin-bottom: 20px;">← Back</div>
+                        <h3>Transaction Details</h3>
+                        <p><strong>ID:</strong> ${t.id || 'N/A'}</p>
+                        <p><strong>Recipient:</strong> ${t.recipientName || 'N/A'}</p>
+                        <p><strong>Account:</strong> ${t.recipientAcc || 'N/A'}</p>
+                        <p><strong>Amount:</strong> ${t.amount || '0'} Br</p>
+                        <p><strong>Date:</strong> ${t.dateTime || t.date || 'N/A'}</p>
+                        <p><strong>Type:</strong> ${t.type || 'N/A'}</p>
+                    </div>
+                `;
+                document.getElementById('transaction-details-content').innerHTML = detailContent;
+                showPage('transaction-details-page');
+            }
+        };
+        
+        list.appendChild(item);
+      });
+    }
+
+    function deleteTransaction(index) {
+        console.log('Deleting transaction at index:', index);
+        let txns = CbeStorage.getTransactions();
+        txns.splice(index, 1);
+        localStorage.setItem('cbe_transactions', JSON.stringify(txns));
+        renderRecentTransactions();
+    }
+
+    function addHoldPressListener(element, callback, duration = 1000) {
+        let timer = null;
+        
+        const start = (e) => {
+            console.log('Hold start event:', e.type);
+            // Don't prevent default on all touchstarts if it's just a scroll
+            // e.preventDefault(); 
+            timer = setTimeout(() => {
+                console.log('Hold timer triggered');
+                callback();
+            }, duration);
+        };
+        
+        const cancel = (e) => {
+            console.log('Hold cancel event:', e.type);
+            if (timer) {
+                clearTimeout(timer);
+                timer = null;
+            }
+        };
+        
+        element.addEventListener('mousedown', start);
+        element.addEventListener('touchstart', start, { passive: true });
+        
+        element.addEventListener('mouseup', cancel);
+        element.addEventListener('mouseleave', cancel);
+        element.addEventListener('touchend', cancel);
+        element.addEventListener('touchmove', cancel);
+    }
+
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+    }
+
+    function showStep(stepId) {
+      const flow = document.getElementById('send-money-flow');
+      flow.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      document.getElementById(stepId).classList.add('active');
+    }
+
+    function updatePinDots() {
+      for (let i = 0; i < 4; i++) {
+        const dot = document.getElementById(`pin-dot-${i}`);
+        dot.textContent = i < enteredPin.length ? '*' : '';
+      }
+    }
+    function handlePinInput(value) {
+      if (value === 'back') {
+        enteredPin = enteredPin.slice(0, -1);
+      } else if (value === 'submit') {
+        if (enteredPin === correctPin) {
+          finalizeTransaction();
+          showPage('home-page');
+          enteredPin = '';
+        } else {
+          alert('Incorrect PIN');
+          enteredPin = '';
+        }
+      } else if (enteredPin.length < 4) {
+        enteredPin += value;
+        if (enteredPin.length === 4) {
+           // Auto-submit if 4 digits
+           setTimeout(() => handlePinInput('submit'), 200);
+        }
+      }
+      updatePinDots();
+    }
+
+    function handleSendTransaction() {
+      const amount = parseFloat(document.getElementById('input-amount').value || '0');
+      const receiver = document.getElementById('input-recipient').value;
+      const account = document.getElementById('input-account').value;
+      
+      localStorage.setItem('transferAmount', amount.toFixed(2));
+      localStorage.setItem('transferReason', document.getElementById('input-reason')?.value || "Transfer");
+      localStorage.setItem('transferRecipientAcc', account);
+      localStorage.setItem('transfer_account', document.getElementById('acc-name-display')?.innerText || receiver);
+      
+      // Navigate to confirm
+      showStep('step-2');
+    }
+    
+    function finalizeTransaction() {
+      const amount = parseFloat(localStorage.getItem('transferAmount') || '0');
+      const receiverName = localStorage.getItem('transfer_account') || "Unknown";
+      const receiverAcc = localStorage.getItem('transferRecipientAcc') || "Unknown";
+      
+      // Update balance
+      CbeStorage.updateBalance(amount);
+      
+      // Auto-record transaction
+      const transaction = {
+          id: "TX" + Date.now(),
+          title: "TransferfromMMToBank by Customer to Org",
+          amount: amount.toFixed(2),
+          date: new Date().toLocaleString(),
+          type: "debit",
+          recipientName: receiverName,
+          recipientAcc: receiverAcc
+      };
+      CbeStorage.saveTransaction(transaction);
+      renderRecentTransactions();
+      
+      showStep('step-6');
+    }
+
+    const keys = [
+        {v: '1', t: 72, l: 5}, {v: '2', t: 72, l: 35}, {v: '3', t: 72, l: 65},
+        {v: '4', t: 78.25, l: 5}, {v: '5', t: 78.25, l: 35}, {v: '6', t: 78.25, l: 65},
+        {v: '7', t: 84.5, l: 5}, {v: '8', t: 84.5, l: 35}, {v: '9', t: 84.5, l: 65},
+        {v: 'back', t: 90.75, l: 5}, {v: '0', t: 90.75, l: 35}, {v: 'submit', t: 90.75, l: 65}
+      ];
+
+      document.getElementById('nav-others').onclick = function() {
+          window.location.href = 'others.html';
+      };
+      
+      // addHoldPressListener(document.getElementById('cash-out-btn'), () => {
+      //     const now = new Date();
+      //     const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      //
+      //     const txns = CbeStorage.getTransactions();
+      //     if (txns.length === 0) {
+      //         alert("No transactions found.");
+      //         return;
+      //     }
+      //     const lastTx = txns[txns.length - 1];
+      //
+      //     const senderName = localStorage.getItem('senderName') || "JUREYJ";
+      //     const senderPhone = localStorage.getItem('senderPhone') || "251959842829";
+      //     const initialBalance = parseFloat(localStorage.getItem('userBalance') || "3082.55");
+      //     
+      //     const amountVal = parseFloat(lastTx.amount || "0");
+      //     const receiverVal = lastTx.recipientName || "";
+      //     const receiverAcc = lastTx.recipientAccount || "";
+      //
+      //     const updatedBalance = (initialBalance - amountVal).toFixed(2);
+      //     const txId = lastTx.txnId || "DHH" + Math.floor(100000 + Math.random() * 900000) + "PM";
+      //
+      //     const fullSmsText = `Dear ${senderName}, you have successfully transferred ${amountVal.toFixed(2)}Br. to ${receiverAcc}-${receiverVal} on ${lastTx.dateTime || dateStr}.Txn ID ${txId}.Your CBEBirr account balance is ${updatedBalance}Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice https://cbepay1.cbe.com.et/aureceipt?TID=${txId}&PH=${senderPhone}`;
+      //
+      //     openSmsApp(fullSmsText);
+      // }, 1500);
+
+      addHoldPressListener(document.getElementById('btn-to-step-7'), () => {
+          showStep('step-7'); 
+          populateReceipt();
+      }, 1500);
+
+      keys.forEach(k => {
+        const el = document.createElement('div');
+        el.style = `position: absolute; top: ${k.t}%; left: ${k.l}%; width: 30%; height: 6.25%; cursor: pointer; background: transparent; z-index: 20;`;
+        el.onclick = () => handlePinInput(k.v);
+        document.getElementById('pin-page').children[0].appendChild(el);
+      });
+
+    // Auto transitions
+    if (localStorage.getItem('showHome') === 'true') {
+      localStorage.removeItem('showHome');
+      showPage('home-page');
+    } else {
+      setTimeout(() => showPage('welcome-page'), 800);
+      setTimeout(() => showPage('signin-page'), 1600);
+    }
+    
+    // Add the overlay dynamically to the home page body
+    const overlay = document.createElement('div');
+    overlay.id = 'transaction-detail-overlay';
+    overlay.style.position = 'absolute';
+    // Position it clearly at the top right, shifted up and to the right over "Transaction Detail"
+    overlay.style.top = '338px'; 
+    overlay.style.right = '2px'; 
+    overlay.style.width = '155px'; 
+    overlay.style.height = '38px'; 
+    overlay.style.zIndex = '1000';
+    overlay.style.cursor = 'pointer';
+    // Transparent clickable overlay for Transaction Detail
+    overlay.style.backgroundColor = 'transparent'; 
+    overlay.style.border = 'none';
+    overlay.style.borderRadius = '0px';
+    // Update the overlay for Transaction Detail
+    overlay.onclick = function(e) {
+        e.stopPropagation();
+        showPage('transaction-menu-page');
+    };
+    
+    // Ensure it's added to the right container
+    const homeBody = document.getElementById('home-body');
+    if (homeBody) {
+        homeBody.appendChild(overlay);
+    }
+
+    // Update Language toggle to navigate to Language Selection Page
+    const langBtn = document.querySelector('[onclick="toggleHomeLanguage()"]');
+    if (langBtn) {
+        langBtn.onclick = function() {
+            showPage('language-selection-page');
+        };
+    }
+
+
+  function openSmsApp(bodyText) {
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        let smsUrl = isAndroid ? `sms:0959842829?body=${encodeURIComponent(bodyText)}` : `sms:0959842829&body=${encodeURIComponent(bodyText)}`;
+        window.open(smsUrl, '_self');
+    }
+
+  // Update the transaction recording to trigger when finalizing the SMS
+  function sendReceiptViaSms(transactionData) {
+  console.log('sendReceiptViaSms called with:', transactionData);
+  const now = new Date();
+  const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+  const senderName = localStorage.getItem('senderName') || "JUREYJ";
+  const senderPhone = localStorage.getItem('senderPhone') || "251959842829";
+  const initialBalance = parseFloat(localStorage.getItem('userBalance') || "3082.55");
+
+  const amountVal = parseFloat(transactionData.amount || "0");
+  const receiverVal = transactionData.recipientName || "";
+  const receiverAcc = transactionData.recipientAccount || "";
+
+  const updatedBalance = (initialBalance - amountVal).toFixed(2);
+  const txId = "DHH" + Math.floor(100000 + Math.random() * 900000) + "PM";
+
+  const fullSmsText = `Dear ${senderName}, you have successfully transferred ${amountVal.toFixed()}Br. to ${receiverAcc}-${receiverVal} on ${dateStr}.Txn ID ${txId}.Your CBEBirr account balance is ${updatedBalance}Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice https://cbepay1.cbe.com.et/aureceipt?TID=${txId}&PH=+251959842829`;
+
+  // RECORD TRANSACTION HERE
+  console.log('RECORDING TRANSACTION with amountVal:', amountVal);
+  const transaction = {
+      amount: amountVal.toFixed(2),
+      recipientName: receiverVal,
+      recipientAccount: receiverAcc,
+      dateTime: dateStr,
+      txnId: txId,
+      type: "CBE Transfer"
+  };
+  console.log('Final recordTransaction call with:', transaction);
+  recordTransaction(transaction);
+  renderRecentTransactions(); 
+
+  openSmsApp(fullSmsText);
+}
   </script>
 </body>
 </html>
