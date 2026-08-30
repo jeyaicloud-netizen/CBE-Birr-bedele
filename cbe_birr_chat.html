@@ -1111,7 +1111,7 @@
 
         function loadTransactions() {
             const container = document.getElementById('chat-container');
-            let txns = CbeStorage.getTransactions();
+            let txns = window.CbeStorage ? window.CbeStorage.getTransactions() : [];
             container.innerHTML = `
                 <div class="msg-wrapper">
                     <div class="message-bubble">
@@ -1135,6 +1135,7 @@
             `;
             
             if (!txns || txns.length === 0) {
+                const currentStoredBalance = safeStorage.getItem('accountBalance') || safeStorage.getItem('user_balance') || '27.53';
                 txns = [
                     {
                         id: "DHT61MOJTU6,FT262413JRB4",
@@ -1142,7 +1143,7 @@
                         recipientName: "Gizealew Walle Demssie",
                         recipientAcc: "1000274326143",
                         dateTime: "29-08-2026 13:29:48",
-                        balance: "27.53",
+                        balance: currentStoredBalance,
                         phone: "251959842829"
                     }
                 ];
@@ -1163,8 +1164,8 @@
                 const cleanRecName = String(rawRecName).replace(/^(Mr|Mrs|Ms)\.?\s*/i, '').trim();
                 const formattedAccountReceiver = `<span class="underline-data">${cleanRecAcc}</span>-Mr`;
                 const amount = t.amount || '240.00';
-                const userName = t.senderName || t.userName || localStorage.getItem('user_name') || 'JUREYJ';
-                const balance = t.balance || localStorage.getItem('accountBalance') || '27.53';
+                const userName = t.senderName || t.userName || safeStorage.getItem('user_name') || 'JUREYJ';
+                const balance = t.balance !== undefined && t.balance !== null ? t.balance : (safeStorage.getItem('accountBalance') || safeStorage.getItem('user_balance') || '27.53');
                 const phoneNum = String(t.phone || t.phoneNumber || t.senderPhone || '251959842829').replace(/^\+/, '');
                 
                 const firstTxnPart = txnId.split(',')[0] || txnId;

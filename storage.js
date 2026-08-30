@@ -44,7 +44,8 @@
         },
         getBalance: () => {
             try {
-                return parseFloat(window.safeStorage.getItem('accountBalance') || '1000.00');
+                const b = window.safeStorage.getItem('accountBalance') || window.safeStorage.getItem('user_balance') || '1000.00';
+                return parseFloat(b);
             } catch(e) {
                 return 1000.00;
             }
@@ -52,9 +53,14 @@
         updateBalance: (amount) => {
             try {
                 const balance = window.CbeStorage.getBalance();
-                window.safeStorage.setItem('accountBalance', (balance - amount).toFixed(2));
+                const newBalance = Math.max(0, balance - parseFloat(amount || '0')).toFixed(2);
+                window.safeStorage.setItem('accountBalance', newBalance);
+                window.safeStorage.setItem('user_balance', newBalance);
+                window.safeStorage.setItem('userBalance', newBalance);
+                return newBalance;
             } catch(e) {
                 console.error('updateBalance error:', e);
+                return '0.00';
             }
         },
         getSavedAccounts: () => {

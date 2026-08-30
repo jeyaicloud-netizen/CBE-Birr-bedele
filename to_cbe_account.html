@@ -594,13 +594,22 @@
               document.getElementById('processing-modal').style.display = 'none';
               
               // --- Balance Deduction Logic ---
+              let newBalance = "0.00";
               try {
-                let balance = parseFloat(safeStorage.getItem('user_balance') || safeStorage.getItem('accountBalance') || '1000.00');
                 const amount = parseFloat(transferAmount || '0');
-                balance -= amount;
-                safeStorage.setItem('user_balance', balance.toFixed(2));
-                safeStorage.setItem('accountBalance', balance.toFixed(2));
-              } catch (e) {}
+                if (window.CbeStorage && typeof window.CbeStorage.updateBalance === 'function') {
+                  newBalance = window.CbeStorage.updateBalance(amount);
+                } else {
+                  let balance = parseFloat(safeStorage.getItem('user_balance') || safeStorage.getItem('accountBalance') || '1000.00');
+                  balance = Math.max(0, balance - amount);
+                  newBalance = balance.toFixed(2);
+                  safeStorage.setItem('user_balance', newBalance);
+                  safeStorage.setItem('accountBalance', newBalance);
+                  safeStorage.setItem('userBalance', newBalance);
+                }
+              } catch (e) {
+                console.error(e);
+              }
               
               // --- SMS Dispatch Simulation ---
               let txId = "TX" + Date.now();
@@ -619,6 +628,7 @@
                   id: txId,
                   title: "TransferfromMMToBank by Customer to Org",
                   amount: parseFloat(transferAmount || '0').toFixed(2),
+                  balance: newBalance,
                   date: new Date().toLocaleString(),
                   type: "debit",
                   recipientName: receiverName,

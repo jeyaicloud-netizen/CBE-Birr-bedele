@@ -573,12 +573,13 @@
         const receiverName = safeStorage.getItem('transfer_account') || "Unknown";
         const receiverAcc = safeStorage.getItem('transferRecipientAcc') || "Unknown";
         
-        window.CbeStorage.updateBalance(amount);
+        const newBalance = window.CbeStorage.updateBalance(amount);
         
         const transaction = {
             id: "TX" + Date.now(),
             title: "TransferfromMMToBank by Customer to Org",
             amount: amount.toFixed(2),
+            balance: newBalance,
             date: new Date().toLocaleString(),
             type: "debit",
             recipientName: receiverName,
