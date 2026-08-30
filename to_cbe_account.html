@@ -357,10 +357,77 @@
       <div onclick="window.location.href='index.html'" style="position: absolute; top: 80%; left: 8%; width: 84%; height: 10%; cursor: pointer;"></div>
   </div>
 
+  <script src="storage.js"></script>
+  <script src="src/storage.js"></script>
   <script>
+    // Safe storage access fallback in case external script fails in WebView/WebIntoApp
+    window._cbeMemoryStore = window._cbeMemoryStore || {};
+    window.safeStorage = window.safeStorage || {
+      getItem: (key) => {
+        try {
+          return localStorage.getItem(key);
+        } catch (e) {
+          return window._cbeMemoryStore[key] || null;
+        }
+      },
+      setItem: (key, val) => {
+        try {
+          localStorage.setItem(key, val);
+        } catch (e) {
+          window._cbeMemoryStore[key] = String(val);
+        }
+      },
+      removeItem: (key) => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          delete window._cbeMemoryStore[key];
+        }
+      }
+    };
+    var safeStorage = window.safeStorage;
+
+    window.CbeStorage = window.CbeStorage || {
+      getTransactions: () => {
+        try {
+          return JSON.parse(window.safeStorage.getItem('cbe_transactions') || '[]');
+        } catch(e) { return []; }
+      },
+      saveTransaction: (transaction) => {
+        try {
+          const txns = window.CbeStorage.getTransactions();
+          txns.push(transaction);
+          window.safeStorage.setItem('cbe_transactions', JSON.stringify(txns));
+        } catch(e) {}
+      },
+      getBalance: () => {
+        try {
+          return parseFloat(window.safeStorage.getItem('accountBalance') || '1000.00');
+        } catch(e) { return 1000.00; }
+      },
+      updateBalance: (amount) => {
+        try {
+          const balance = window.CbeStorage.getBalance();
+          window.safeStorage.setItem('accountBalance', (balance - amount).toFixed(2));
+        } catch(e) {}
+      },
+      getSavedAccounts: () => {
+        try {
+          return JSON.parse(window.safeStorage.getItem('savedAccounts') || '[]');
+        } catch(e) { return []; }
+      },
+      saveAccount: (name, number) => {
+        try {
+          const accounts = window.CbeStorage.getSavedAccounts();
+          accounts.push({ name, number });
+          window.safeStorage.setItem('savedAccounts', JSON.stringify(accounts));
+        } catch(e) {}
+      }
+    };
+
     function goHome() {
       try {
-        localStorage.setItem('showHome', 'true');
+        safeStorage.setItem('showHome', 'true');
       } catch (e) {}
       window.location.href = 'index.html';
     }
@@ -397,35 +464,35 @@
       }
     }
     function lookupAccount() {
-      const accNum = document.getElementById('input-recipient').value;
+      const accNum = document.getElementById('input-recipient')?.value;
+      if (!accNum) {
+        const display = document.getElementById('acc-name-display');
+        if (display) display.innerText = '';
+        return;
+      }
       
-      // Check in savedAccounts array
-      let accounts = [];
-      try {
-        accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
-      } catch (e) {}
+      let accounts = window.CbeStorage.getSavedAccounts();
       let match = accounts.find(a => a.number === accNum);
       
-      // Also check single keys if not found
-      try {
-        if (!match && accNum === localStorage.getItem('cbe_saved_acc_num')) {
-            match = { name: localStorage.getItem('cbe_saved_acc_name'), number: accNum };
-        }
-      } catch (e) {}
+      if (!match && accNum === safeStorage.getItem('cbe_saved_acc_num')) {
+          match = { name: safeStorage.getItem('cbe_saved_acc_name'), number: accNum };
+      }
       
       const display = document.getElementById('acc-name-display');
-      display.innerText = '';
-      if (match) {
-        setTimeout(() => {
-          display.innerText = match.name;
-        }, 800);
+      if (display) {
+        display.innerText = '';
+        if (match) {
+          setTimeout(() => {
+            display.innerText = match.name;
+          }, 300);
+        }
       }
     }
     
     function openModal() {
         let amount = '0';
         try {
-          amount = localStorage.getItem('transferAmount') || '0';
+          amount = safeStorage.getItem('transferAmount') || '0';
         } catch (e) {}
         document.getElementById('modal-amount-display').innerText = amount + " ETB";
         document.getElementById('confirmation-modal').style.display = 'block';
@@ -436,40 +503,41 @@
     function confirmTransaction() {
         document.getElementById('confirmation-modal').style.display = 'none';
         
-        const account = document.getElementById('acc-name-display').innerText || "Abdul abahaylu fereja";
+        const account = document.getElementById('acc-name-display')?.innerText || "Abdul abahaylu fereja";
         try {
-          localStorage.setItem('transfer_account', account);
+          safeStorage.setItem('transfer_account', account);
         } catch (e) {}
-        document.querySelector('.auth-account-text').innerText = account;
+        const authAcc = document.querySelector('.auth-account-text');
+        if (authAcc) authAcc.innerText = account;
         
         let amount = "0";
         try {
-          amount = localStorage.getItem('transferAmount') || "0";
+          amount = safeStorage.getItem('transferAmount') || "0";
         } catch (e) {}
-        document.querySelector('.auth-amount-text').innerText = amount + " ETB";
+        const authAmt = document.querySelector('.auth-amount-text');
+        if (authAmt) authAmt.innerText = amount + " ETB";
         
         // Generate and display transaction message
         const d = new Date();
         const date = `${d.getDate()} ${d.toLocaleString('default', { month: 'short' })} ${d.getFullYear()}`;
         const txId = Math.random().toString(36).substring(2, 10).toUpperCase();
         
-        // Restore proper name spacing
         const receiverName = account;
         const msg = `ETB ${amount} debited from JUREYJ ABDUL MENAL HUSSEN for ${receiverName} on ${date} with Transaction ID: ${txId} via CBEBirr mobile app's CBE Transfer.`;
-        document.getElementById('transaction-message').innerText = msg;
+        const txMsgEl = document.getElementById('transaction-message');
+        if (txMsgEl) txMsgEl.innerText = msg;
         
         document.getElementById('step4-screen').style.display = 'block';
     }
     
     document.getElementById('sendMoneyBtn').onclick = function() {
-      const amountInput = document.getElementById('input-amount').value;
-      const reasonInput = document.getElementById('input-reason').value;
+      const amountInput = document.getElementById('input-amount')?.value;
+      const reasonInput = document.getElementById('input-reason')?.value;
       try {
-        localStorage.setItem('transferAmount', amountInput || "0");
-        localStorage.setItem('transferReason', reasonInput || "Transfer");
+        safeStorage.setItem('transferAmount', amountInput || "0");
+        safeStorage.setItem('transferReason', reasonInput || "Transfer");
       } catch (e) {}
       
-      // Open Confirmation Sheet
       openModal();
     };
     
@@ -513,8 +581,8 @@
           let transferAmount = "0";
           let transferReason = "Transfer";
           try {
-            transferAmount = localStorage.getItem('transferAmount') || "0";
-            transferReason = localStorage.getItem('transferReason') || "Transfer";
+            transferAmount = safeStorage.getItem('transferAmount') || "0";
+            transferReason = safeStorage.getItem('transferReason') || "Transfer";
           } catch (e) {}
 
           // Show Processing Modal
@@ -527,21 +595,35 @@
               
               // --- Balance Deduction Logic ---
               try {
-                let balance = parseFloat(localStorage.getItem('user_balance') || '1000.00');
+                let balance = parseFloat(safeStorage.getItem('user_balance') || safeStorage.getItem('accountBalance') || '1000.00');
                 const amount = parseFloat(transferAmount || '0');
                 balance -= amount;
-                localStorage.setItem('user_balance', balance.toFixed(2));
+                safeStorage.setItem('user_balance', balance.toFixed(2));
+                safeStorage.setItem('accountBalance', balance.toFixed(2));
               } catch (e) {}
               
               // --- SMS Dispatch Simulation ---
               let txId = "TX" + Date.now();
-              const txMatch = document.getElementById('transaction-message').innerText.match(/Transaction ID: ([A-Z0-9]+)/);
+              const txMatch = document.getElementById('transaction-message')?.innerText?.match(/Transaction ID: ([A-Z0-9]+)/);
               if (txMatch && txMatch[1]) {
                 txId = txMatch[1];
               }
               let receiverName = "Abdul abahaylu fereja";
               try {
-                receiverName = localStorage.getItem('transfer_account') || receiverName;
+                receiverName = safeStorage.getItem('transfer_account') || receiverName;
+              } catch (e) {}
+
+              // Also record transaction into CbeStorage
+              try {
+                window.CbeStorage.saveTransaction({
+                  id: txId,
+                  title: "TransferfromMMToBank by Customer to Org",
+                  amount: parseFloat(transferAmount || '0').toFixed(2),
+                  date: new Date().toLocaleString(),
+                  type: "debit",
+                  recipientName: receiverName,
+                  recipientAcc: document.getElementById('input-recipient')?.value || "CBE_ACC"
+                });
               } catch (e) {}
 
               // --- Populate Receipt Details ---

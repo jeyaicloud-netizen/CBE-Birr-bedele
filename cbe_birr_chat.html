@@ -7,7 +7,35 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="storage.js"></script>
     <script src="src/storage.js"></script>
+    <script>
+      window._cbeMemoryStore = window._cbeMemoryStore || {};
+      window.safeStorage = window.safeStorage || {
+        getItem: (key) => {
+          try {
+            return localStorage.getItem(key);
+          } catch (e) {
+            return window._cbeMemoryStore[key] || null;
+          }
+        },
+        setItem: (key, val) => {
+          try {
+            localStorage.setItem(key, val);
+          } catch (e) {
+            window._cbeMemoryStore[key] = String(val);
+          }
+        },
+        removeItem: (key) => {
+          try {
+            localStorage.removeItem(key);
+          } catch (e) {
+            delete window._cbeMemoryStore[key];
+          }
+        }
+      };
+      var safeStorage = window.safeStorage;
+    </script>
     <style>
         :root {
             --bubble-scale: 1;

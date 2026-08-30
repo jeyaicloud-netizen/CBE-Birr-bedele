@@ -89,22 +89,92 @@
   <!-- Floating Map Button (Purple) -->
   <div id="map-button" style="position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: purple; border-radius: 50%; z-index: 1000; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">Map</div>
 
+  <!-- Storage Scripts with Safe Fallback -->
+  <script src="storage.js"></script>
   <script src="src/storage.js"></script>
   <script>
-    let currentLang = localStorage.getItem('lang') || 'EN';
+    // Safe storage access fallback in case external script fails in WebView/WebIntoApp
+    window._cbeMemoryStore = window._cbeMemoryStore || {};
+    window.safeStorage = window.safeStorage || {
+      getItem: (key) => {
+        try {
+          return localStorage.getItem(key);
+        } catch (e) {
+          return window._cbeMemoryStore[key] || null;
+        }
+      },
+      setItem: (key, val) => {
+        try {
+          localStorage.setItem(key, val);
+        } catch (e) {
+          window._cbeMemoryStore[key] = String(val);
+        }
+      },
+      removeItem: (key) => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          delete window._cbeMemoryStore[key];
+        }
+      }
+    };
+    var safeStorage = window.safeStorage;
+
+    window.CbeStorage = window.CbeStorage || {
+      getTransactions: () => {
+        try {
+          return JSON.parse(window.safeStorage.getItem('cbe_transactions') || '[]');
+        } catch(e) { return []; }
+      },
+      saveTransaction: (transaction) => {
+        try {
+          const txns = window.CbeStorage.getTransactions();
+          txns.push(transaction);
+          window.safeStorage.setItem('cbe_transactions', JSON.stringify(txns));
+        } catch(e) {}
+      },
+      getBalance: () => {
+        try {
+          return parseFloat(window.safeStorage.getItem('accountBalance') || '1000.00');
+        } catch(e) { return 1000.00; }
+      },
+      updateBalance: (amount) => {
+        try {
+          const balance = window.CbeStorage.getBalance();
+          window.safeStorage.setItem('accountBalance', (balance - amount).toFixed(2));
+        } catch(e) {}
+      },
+      getSavedAccounts: () => {
+        try {
+          return JSON.parse(window.safeStorage.getItem('savedAccounts') || '[]');
+        } catch(e) { return []; }
+      },
+      saveAccount: (name, number) => {
+        try {
+          const accounts = window.CbeStorage.getSavedAccounts();
+          accounts.push({ name, number });
+          window.safeStorage.setItem('savedAccounts', JSON.stringify(accounts));
+        } catch(e) {}
+      }
+    };
+
+    let currentLang = safeStorage.getItem('lang') || 'EN';
     
     function updateImages() {
-      document.getElementById('others-content-img').src = currentLang === 'AM' ? './btn_others_am.png' : './btn_others_en.png';
+      const img = document.getElementById('others-content-img');
+      if (img) {
+        img.src = currentLang === 'AM' ? './btn_others_am.png' : './btn_others_en.png';
+      }
     }
     
     function toggleLanguage() {
       currentLang = currentLang === 'AM' ? 'EN' : 'AM';
-      localStorage.setItem('lang', currentLang);
+      safeStorage.setItem('lang', currentLang);
       updateImages();
     }
     
     function goHome() {
-        localStorage.setItem('showHome', 'true');
+        safeStorage.setItem('showHome', 'true');
         window.location.href = 'index.html';
     }
 
@@ -117,52 +187,78 @@
     }
     
     function showModal(id) {
-      document.getElementById('modal-overlay').classList.add('active');
-      document.getElementById(id).classList.add('active');
-      if(id === 'list-modal') renderAccounts();
+      const overlay = document.getElementById('modal-overlay');
+      const target = document.getElementById(id);
+      if (overlay) overlay.classList.add('active');
+      if (target) target.classList.add('active');
+      if (id === 'list-modal') renderAccounts();
     }
     
     function closeModals() {
-      document.getElementById('modal-overlay').classList.remove('active');
+      const overlay = document.getElementById('modal-overlay');
+      if (overlay) overlay.classList.remove('active');
       document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
     }
 
     function saveBalance() {
-        const balance = document.getElementById('admin-balance-input').value;
-        localStorage.setItem('accountBalance', balance || '0');
-        alert('Balance updated to ' + balance + ' ETB');
+        const balance = document.getElementById('admin-balance-input')?.value;
+        if (balance !== undefined && balance !== '') {
+          safeStorage.setItem('accountBalance', balance);
+          safeStorage.setItem('user_balance', balance);
+          safeStorage.setItem('userBalance', balance);
+        }
         closeModals();
     }
 
     function saveAccount() {
-        const name = document.getElementById('acc-name').value;
-        const number = document.getElementById('acc-number').value;
-        if (!name || !number) return;
-        CbeStorage.saveAccount(name, number);
-        localStorage.setItem('cbe_saved_acc_num', number);
-        localStorage.setItem('cbe_saved_acc_name', name);
-        document.getElementById('acc-name').value = '';
-        document.getElementById('acc-number').value = '';
-        closeModals();
+        const nameInput = document.getElementById('acc-name');
+        const numInput = document.getElementById('acc-number');
+        const name = nameInput?.value?.trim();
+        const number = numInput?.value?.trim();
+        if (!name || !number) {
+            alert('Please enter both Account Name and Account Number');
+            return;
+        }
+        
+        try {
+          window.CbeStorage.saveAccount(name, number);
+          safeStorage.setItem('cbe_saved_acc_num', number);
+          safeStorage.setItem('cbe_saved_acc_name', name);
+          
+          if (nameInput) nameInput.value = '';
+          if (numInput) numInput.value = '';
+          
+          closeModals();
+          alert('Account saved: ' + name + ' (' + number + ')');
+        } catch (e) {
+          console.error('Error saving account:', e);
+          closeModals();
+        }
     }
     
     function renderAccounts() {
         const container = document.getElementById('saved-accounts-list');
-        const accounts = CbeStorage.getSavedAccounts();
+        if (!container) return;
+        const accounts = window.CbeStorage.getSavedAccounts();
+        if (accounts.length === 0) {
+            container.innerHTML = '<div style="padding: 15px; color: #666; text-align: center;">No saved accounts yet.</div>';
+            return;
+        }
         container.innerHTML = accounts.map((acc, index) => `
             <div class="acc-item">
-                <div><strong>${acc.name}</strong><br>${acc.number}</div>
+                <div><strong>${acc.name}</strong><br><span style="color: #666;">${acc.number}</span></div>
                 <div class="acc-actions">
-                    <button class="action-btn" onclick="editAccount(${index})">✏️</button>
-                    <button class="action-btn" onclick="deleteAccount(${index})">🗑️</button>
+                    <button class="action-btn" type="button" onclick="editAccount(${index})">✏️</button>
+                    <button class="action-btn" type="button" onclick="deleteAccount(${index})">🗑️</button>
                 </div>
             </div>
         `).join('');
     }
 
     function editAccount(index) {
-        const accounts = CbeStorage.getSavedAccounts();
+        const accounts = window.CbeStorage.getSavedAccounts();
         const acc = accounts[index];
+        if (!acc) return;
         document.getElementById('edit-acc-name').value = acc.name;
         document.getElementById('edit-acc-number').value = acc.number;
         document.getElementById('edit-acc-index').value = index;
@@ -170,35 +266,50 @@
     }
 
     function updateAccount() {
-        const index = document.getElementById('edit-acc-index').value;
-        const name = document.getElementById('edit-acc-name').value;
-        const number = document.getElementById('edit-acc-number').value;
-        if (!name || !number) return;
-        const accounts = CbeStorage.getSavedAccounts();
-        accounts[index] = { name, number };
-        localStorage.setItem('savedAccounts', JSON.stringify(accounts));
-        renderAccounts();
-        closeModals();
+        const index = document.getElementById('edit-acc-index')?.value;
+        const name = document.getElementById('edit-acc-name')?.value?.trim();
+        const number = document.getElementById('edit-acc-number')?.value?.trim();
+        if (!name || !number || index === undefined) return;
+        
+        try {
+          const accounts = window.CbeStorage.getSavedAccounts();
+          accounts[index] = { name, number };
+          safeStorage.setItem('savedAccounts', JSON.stringify(accounts));
+          safeStorage.setItem('cbe_saved_acc_num', number);
+          safeStorage.setItem('cbe_saved_acc_name', name);
+          renderAccounts();
+          closeModals();
+        } catch (e) {
+          console.error('Error updating account:', e);
+        }
     }
 
     function deleteAccount(index) {
-        const accounts = CbeStorage.getSavedAccounts();
-        accounts.splice(index, 1);
-        localStorage.setItem('savedAccounts', JSON.stringify(accounts));
-        renderAccounts();
+        try {
+          const accounts = window.CbeStorage.getSavedAccounts();
+          accounts.splice(index, 1);
+          safeStorage.setItem('savedAccounts', JSON.stringify(accounts));
+          renderAccounts();
+        } catch (e) {
+          console.error('Error deleting account:', e);
+        }
     }
 
     function addHoldPressListener(element, callback) {
+        if (!element) return;
         let timer = null;
         
         const start = () => {
             timer = setTimeout(() => {
-            callback();
+                callback();
             }, 500); // 500ms hold press duration
         };
         
         const cancel = () => {
-            if (timer) clearTimeout(timer);
+            if (timer) {
+                clearTimeout(timer);
+                timer = null;
+            }
         };
         
         element.addEventListener('mousedown', start);
@@ -208,6 +319,11 @@
         element.addEventListener('mouseleave', cancel);
         element.addEventListener('touchend', cancel);
         element.addEventListener('touchmove', cancel);
+        
+        // Also support direct click as backup
+        element.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
     }
 
     addHoldPressListener(document.getElementById('biometrics-overlay'), () => showModal('save-modal'));
