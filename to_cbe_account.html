@@ -359,7 +359,9 @@
 
   <script>
     function goHome() {
-      localStorage.setItem('showHome', 'true');
+      try {
+        localStorage.setItem('showHome', 'true');
+      } catch (e) {}
       window.location.href = 'index.html';
     }
     
@@ -398,13 +400,18 @@
       const accNum = document.getElementById('input-recipient').value;
       
       // Check in savedAccounts array
-      const accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
+      let accounts = [];
+      try {
+        accounts = JSON.parse(localStorage.getItem('savedAccounts') || '[]');
+      } catch (e) {}
       let match = accounts.find(a => a.number === accNum);
       
       // Also check single keys if not found
-      if (!match && accNum === localStorage.getItem('cbe_saved_acc_num')) {
-          match = { name: localStorage.getItem('cbe_saved_acc_name'), number: accNum };
-      }
+      try {
+        if (!match && accNum === localStorage.getItem('cbe_saved_acc_num')) {
+            match = { name: localStorage.getItem('cbe_saved_acc_name'), number: accNum };
+        }
+      } catch (e) {}
       
       const display = document.getElementById('acc-name-display');
       display.innerText = '';
@@ -416,7 +423,10 @@
     }
     
     function openModal() {
-        const amount = localStorage.getItem('transferAmount') || '0';
+        let amount = '0';
+        try {
+          amount = localStorage.getItem('transferAmount') || '0';
+        } catch (e) {}
         document.getElementById('modal-amount-display').innerText = amount + " ETB";
         document.getElementById('confirmation-modal').style.display = 'block';
     }
@@ -427,10 +437,15 @@
         document.getElementById('confirmation-modal').style.display = 'none';
         
         const account = document.getElementById('acc-name-display').innerText || "Abdul abahaylu fereja";
-        localStorage.setItem('transfer_account', account);
+        try {
+          localStorage.setItem('transfer_account', account);
+        } catch (e) {}
         document.querySelector('.auth-account-text').innerText = account;
         
-        const amount = localStorage.getItem('transferAmount') || "0";
+        let amount = "0";
+        try {
+          amount = localStorage.getItem('transferAmount') || "0";
+        } catch (e) {}
         document.querySelector('.auth-amount-text').innerText = amount + " ETB";
         
         // Generate and display transaction message
@@ -449,8 +464,10 @@
     document.getElementById('sendMoneyBtn').onclick = function() {
       const amountInput = document.getElementById('input-amount').value;
       const reasonInput = document.getElementById('input-reason').value;
-      localStorage.setItem('transferAmount', amountInput || "0");
-      localStorage.setItem('transferReason', reasonInput || "Transfer");
+      try {
+        localStorage.setItem('transferAmount', amountInput || "0");
+        localStorage.setItem('transferReason', reasonInput || "Transfer");
+      } catch (e) {}
       
       // Open Confirmation Sheet
       openModal();
@@ -493,26 +510,39 @@
           // Hide Authentication popup
           document.getElementById('step4-screen').style.display = 'none';
           
+          let transferAmount = "0";
+          let transferReason = "Transfer";
+          try {
+            transferAmount = localStorage.getItem('transferAmount') || "0";
+            transferReason = localStorage.getItem('transferReason') || "Transfer";
+          } catch (e) {}
+
           // Show Processing Modal
-          document.getElementById('proc-amount').innerText = (localStorage.getItem('transferAmount') || "0") + " ETB";
-          document.getElementById('proc-reason').innerText = localStorage.getItem('transferReason') || "Transfer";
+          document.getElementById('proc-amount').innerText = transferAmount + " ETB";
+          document.getElementById('proc-reason').innerText = transferReason;
           document.getElementById('processing-modal').style.display = 'flex';
           
           setTimeout(() => {
               document.getElementById('processing-modal').style.display = 'none';
               
               // --- Balance Deduction Logic ---
-              let balance = parseFloat(localStorage.getItem('user_balance') || '1000.00');
-              const amount = parseFloat(localStorage.getItem('transferAmount') || '0');
-              balance -= amount;
-              localStorage.setItem('user_balance', balance.toFixed(2));
+              try {
+                let balance = parseFloat(localStorage.getItem('user_balance') || '1000.00');
+                const amount = parseFloat(transferAmount || '0');
+                balance -= amount;
+                localStorage.setItem('user_balance', balance.toFixed(2));
+              } catch (e) {}
               
               // --- SMS Dispatch Simulation ---
-              const txId = document.getElementById('transaction-message').innerText.match(/Transaction ID: ([A-Z0-9]+)/)[1];
-              const receiverName = localStorage.getItem('transfer_account');
-              setTimeout(() => {
-                  console.log(`[SMS from CBEBirr]: Dear Customer, you have successfully transferred ${amount}Br. to ${receiverName}. Txn ID ${txId}. Your CBEBirr account balance is ${balance.toFixed(2)}Br.`);
-              }, 30000); // 30s delay
+              let txId = "TX" + Date.now();
+              const txMatch = document.getElementById('transaction-message').innerText.match(/Transaction ID: ([A-Z0-9]+)/);
+              if (txMatch && txMatch[1]) {
+                txId = txMatch[1];
+              }
+              let receiverName = "Abdul abahaylu fereja";
+              try {
+                receiverName = localStorage.getItem('transfer_account') || receiverName;
+              } catch (e) {}
 
               // --- Populate Receipt Details ---
               document.getElementById('receipt-sender').innerText = "JUREYJ ABDUL MENAL HUSSEN";
@@ -520,8 +550,8 @@
               document.getElementById('receipt-receiver-acc').innerText = "RECEIVER_ACC - CBE / " + receiverName;
               document.getElementById('receipt-tx-id').innerText = txId;
               document.getElementById('receipt-date').innerText = new Date().toISOString().slice(0, 16).replace('T', ' ');
-              document.getElementById('receipt-amount').innerText = amount.toFixed(2);
-              document.getElementById('receipt-amount-words').innerText = "Amount in words placeholder"; // Simplified
+              document.getElementById('receipt-amount').innerText = parseFloat(transferAmount).toFixed(2);
+              document.getElementById('receipt-amount-words').innerText = "Amount in words placeholder";
 
               // Navigate to Success screen
               document.getElementById('success-screen').style.display = 'block';

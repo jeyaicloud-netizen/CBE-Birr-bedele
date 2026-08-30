@@ -126,7 +126,7 @@
       <div id="home-body" style="position: absolute !important; top: 0 !important; bottom: 0 !important; left: 0 !important; right: 0 !important; overflow-y: scroll !important; z-index: 10 !important;">
         <div style="position: relative; width: 100%; max-width: 480px; margin: 0 auto;">
             <img id="home-image-body" src="scroll_body_en.png" alt="Body" style="width: 100%; display: block; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; pointer-events: none;">
-            <div onclick="window.location.href='/to_cbe_account.html'" ontouchend="window.location.href='/to_cbe_account.html'" style="position: absolute; top: 31%; left: 51%; width: 22%; height: 8.5%; z-index: 999; display: block; background: rgba(0,0,0,0); border: none; outline: none; -webkit-tap-highlight-color: transparent; cursor: pointer;"></div>
+            <div onclick="window.location.href='to_cbe_account.html'" ontouchend="window.location.href='to_cbe_account.html'" style="position: absolute; top: 31%; left: 51%; width: 22%; height: 8.5%; z-index: 999; display: block; background: rgba(0,0,0,0); border: none; outline: none; -webkit-tap-highlight-color: transparent; cursor: pointer;"></div>
             <div id="cash-out-btn" style="position: absolute; top: 54%; left: 6%; width: 20%; height: 10%; z-index: 999; display: block; background: transparent; border: none; outline: none; -webkit-tap-highlight-color: transparent; cursor: pointer;"></div>
         </div>
       </div>
@@ -265,8 +265,75 @@
     
     <!-- Others Page removed -->
   </div>
+  <!-- Storage and Script logic -->
+  <script src="storage.js"></script>
   <script src="src/storage.js"></script>
   <script>
+    // Safe storage access fallback
+    window._cbeMemoryStore = window._cbeMemoryStore || {};
+    window.safeStorage = window.safeStorage || {
+      getItem: (key) => {
+        try {
+          return localStorage.getItem(key);
+        } catch (e) {
+          return window._cbeMemoryStore[key] || null;
+        }
+      },
+      setItem: (key, val) => {
+        try {
+          localStorage.setItem(key, val);
+        } catch (e) {
+          window._cbeMemoryStore[key] = String(val);
+        }
+      },
+      removeItem: (key) => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          delete window._cbeMemoryStore[key];
+        }
+      }
+    };
+    var safeStorage = window.safeStorage;
+
+    window.CbeStorage = window.CbeStorage || {
+      getTransactions: () => {
+        try {
+          return JSON.parse(safeStorage.getItem('cbe_transactions') || '[]');
+        } catch(e) { return []; }
+      },
+      saveTransaction: (transaction) => {
+        try {
+          const txns = window.CbeStorage.getTransactions();
+          txns.push(transaction);
+          safeStorage.setItem('cbe_transactions', JSON.stringify(txns));
+        } catch(e) {}
+      },
+      getBalance: () => {
+        try {
+          return parseFloat(safeStorage.getItem('accountBalance') || '1000.00');
+        } catch(e) { return 1000.00; }
+      },
+      updateBalance: (amount) => {
+        try {
+          const balance = window.CbeStorage.getBalance();
+          safeStorage.setItem('accountBalance', (balance - amount).toFixed(2));
+        } catch(e) {}
+      },
+      getSavedAccounts: () => {
+        try {
+          return JSON.parse(safeStorage.getItem('savedAccounts') || '[]');
+        } catch(e) { return []; }
+      },
+      saveAccount: (name, number) => {
+        try {
+          const accounts = window.CbeStorage.getSavedAccounts();
+          accounts.push({ name, number });
+          safeStorage.setItem('savedAccounts', JSON.stringify(accounts));
+        } catch(e) {}
+      }
+    };
+
     let signinLanguage = 'EN';
     let pinLanguage = 'AM';
     let homeLanguage = 'EN';
@@ -293,23 +360,24 @@
     }
 
     function lookupAccount() {
-      const accNum = document.getElementById('input-recipient').value;
+      const accNum = document.getElementById('input-recipient')?.value;
+      if (!accNum) return;
       
-      // Check in savedAccounts array
-      const accounts = CbeStorage.getSavedAccounts();
+      const accounts = window.CbeStorage.getSavedAccounts();
       let match = accounts.find(a => a.number === accNum);
       
-      // Also check single keys if not found
-      if (!match && accNum === localStorage.getItem('cbe_saved_acc_num')) {
-          match = { name: localStorage.getItem('cbe_saved_acc_name'), number: accNum };
+      if (!match && accNum === safeStorage.getItem('cbe_saved_acc_num')) {
+          match = { name: safeStorage.getItem('cbe_saved_acc_name'), number: accNum };
       }
       
       const display = document.getElementById('acc-name-display');
-      display.innerText = '';
-      if (match) {
-        setTimeout(() => {
-          display.innerText = match.name;
-        }, 800);
+      if (display) {
+        display.innerText = '';
+        if (match) {
+          setTimeout(() => {
+            display.innerText = match.name;
+          }, 800);
+        }
       }
     }
 
@@ -318,19 +386,19 @@
       const rec = document.getElementById('input-recipient')?.value || "";
       const acc = document.getElementById('input-account')?.value || "";
       
-      localStorage.setItem('txnAmount', amt);
-      localStorage.setItem('txnRecipient', rec);
-      localStorage.setItem('txnAccount', acc);
+      safeStorage.setItem('txnAmount', amt);
+      safeStorage.setItem('txnRecipient', rec);
+      safeStorage.setItem('txnAccount', acc);
     }
 
     function populateReceipt(customTxn) {
-      const txns = CbeStorage.getTransactions();
+      const txns = window.CbeStorage.getTransactions();
       const lastTx = txns.length > 0 ? txns[txns.length - 1] : null;
       const t = customTxn || lastTx;
 
-      const amount = (t && t.amount) || localStorage.getItem('transferAmount') || "0";
-      const receiver = (t && t.recipientName) || localStorage.getItem('transfer_account') || "";
-      const account = (t && (t.recipientAcc || t.recipientAccount)) || localStorage.getItem('transferRecipientAcc') || "";
+      const amount = (t && t.amount) || safeStorage.getItem('transferAmount') || "0";
+      const receiver = (t && t.recipientName) || safeStorage.getItem('transfer_account') || "";
+      const account = (t && (t.recipientAcc || t.recipientAccount)) || safeStorage.getItem('transferRecipientAcc') || "";
       const txId = (t && (t.id || t.txnId)) || ("DHH" + Math.floor(100000 + Math.random() * 900000) + "PM");
       const date = (t && (t.dateTime || t.date)) || new Date().toLocaleString();
       
@@ -348,12 +416,13 @@
 
     function recordTransaction(transaction) {
       console.log('Recording transaction:', transaction);
-      CbeStorage.saveTransaction(transaction);
+      window.CbeStorage.saveTransaction(transaction);
     }
 
     function renderRecentTransactions() {
       const list = document.getElementById('recent-transactions-list');
-      const txns = CbeStorage.getTransactions();
+      if (!list) return;
+      const txns = window.CbeStorage.getTransactions();
       
       list.innerHTML = '';
       if (txns.length === 0) {
@@ -361,7 +430,6 @@
         return;
       }
 
-      // Show latest at top
       [...txns].reverse().forEach((t, index) => {
         const item = document.createElement('div');
         item.style.borderBottom = '1px solid #ccc';
@@ -384,7 +452,6 @@
 
         item.onclick = (e) => {
             if (e.target.tagName !== 'BUTTON') {
-                // Open details page
                 const detailContent = `
                     <div style="padding: 20px;">
                         <div onclick="showPage('recent-transactions-page')" style="cursor: pointer; margin-bottom: 20px;">← Back</div>
@@ -408,27 +475,23 @@
 
     function deleteTransaction(index) {
         console.log('Deleting transaction at index:', index);
-        let txns = CbeStorage.getTransactions();
+        let txns = window.CbeStorage.getTransactions();
         txns.splice(index, 1);
-        localStorage.setItem('cbe_transactions', JSON.stringify(txns));
+        safeStorage.setItem('cbe_transactions', JSON.stringify(txns));
         renderRecentTransactions();
     }
 
     function addHoldPressListener(element, callback, duration = 1000) {
+        if (!element) return;
         let timer = null;
         
         const start = (e) => {
-            console.log('Hold start event:', e.type);
-            // Don't prevent default on all touchstarts if it's just a scroll
-            // e.preventDefault(); 
             timer = setTimeout(() => {
-                console.log('Hold timer triggered');
                 callback();
             }, duration);
         };
         
-        const cancel = (e) => {
-            console.log('Hold cancel event:', e.type);
+        const cancel = () => {
             if (timer) {
                 clearTimeout(timer);
                 timer = null;
@@ -437,7 +500,6 @@
         
         element.addEventListener('mousedown', start);
         element.addEventListener('touchstart', start, { passive: true });
-        
         element.addEventListener('mouseup', cancel);
         element.addEventListener('mouseleave', cancel);
         element.addEventListener('touchend', cancel);
@@ -446,78 +508,87 @@
 
     function showPage(pageId) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById(pageId).classList.add('active');
+      const target = document.getElementById(pageId);
+      if (target) {
+        target.classList.add('active');
+      }
     }
 
     function showStep(stepId) {
       const flow = document.getElementById('send-money-flow');
+      if (!flow) return;
       flow.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-      document.getElementById(stepId).classList.add('active');
+      const step = document.getElementById(stepId);
+      if (step) {
+        step.classList.add('active');
+      }
     }
 
     function updatePinDots() {
       for (let i = 0; i < 4; i++) {
         const dot = document.getElementById(`pin-dot-${i}`);
-        dot.textContent = i < enteredPin.length ? '*' : '';
+        if (dot) {
+          dot.textContent = i < enteredPin.length ? '*' : '';
+        }
       }
     }
+
     function handlePinInput(value) {
       if (value === 'back') {
         enteredPin = enteredPin.slice(0, -1);
       } else if (value === 'submit') {
-        if (enteredPin === correctPin) {
-          finalizeTransaction();
-          showPage('home-page');
-          enteredPin = '';
-        } else {
-          alert('Incorrect PIN');
-          enteredPin = '';
-        }
+        enteredPin = '';
+        updatePinDots();
+        showPage('home-page');
+        return;
       } else if (enteredPin.length < 4) {
         enteredPin += value;
         if (enteredPin.length === 4) {
-           // Auto-submit if 4 digits
-           setTimeout(() => handlePinInput('submit'), 200);
+           setTimeout(() => {
+             enteredPin = '';
+             updatePinDots();
+             showPage('home-page');
+           }, 150);
         }
       }
       updatePinDots();
     }
 
     function handleSendTransaction() {
-      const amount = parseFloat(document.getElementById('input-amount').value || '0');
-      const receiver = document.getElementById('input-recipient').value;
-      const account = document.getElementById('input-account').value;
+      const amount = parseFloat(document.getElementById('input-amount')?.value || '0');
+      const receiver = document.getElementById('input-recipient')?.value || '';
+      const account = document.getElementById('input-account')?.value || '';
       
-      localStorage.setItem('transferAmount', amount.toFixed(2));
-      localStorage.setItem('transferReason', document.getElementById('input-reason')?.value || "Transfer");
-      localStorage.setItem('transferRecipientAcc', account);
-      localStorage.setItem('transfer_account', document.getElementById('acc-name-display')?.innerText || receiver);
+      safeStorage.setItem('transferAmount', amount.toFixed(2));
+      safeStorage.setItem('transferReason', document.getElementById('input-reason')?.value || "Transfer");
+      safeStorage.setItem('transferRecipientAcc', account);
+      safeStorage.setItem('transfer_account', document.getElementById('acc-name-display')?.innerText || receiver);
       
-      // Navigate to confirm
       showStep('step-2');
     }
     
     function finalizeTransaction() {
-      const amount = parseFloat(localStorage.getItem('transferAmount') || '0');
-      const receiverName = localStorage.getItem('transfer_account') || "Unknown";
-      const receiverAcc = localStorage.getItem('transferRecipientAcc') || "Unknown";
-      
-      // Update balance
-      CbeStorage.updateBalance(amount);
-      
-      // Auto-record transaction
-      const transaction = {
-          id: "TX" + Date.now(),
-          title: "TransferfromMMToBank by Customer to Org",
-          amount: amount.toFixed(2),
-          date: new Date().toLocaleString(),
-          type: "debit",
-          recipientName: receiverName,
-          recipientAcc: receiverAcc
-      };
-      CbeStorage.saveTransaction(transaction);
-      renderRecentTransactions();
-      
+      try {
+        const amount = parseFloat(safeStorage.getItem('transferAmount') || '0');
+        const receiverName = safeStorage.getItem('transfer_account') || "Unknown";
+        const receiverAcc = safeStorage.getItem('transferRecipientAcc') || "Unknown";
+        
+        window.CbeStorage.updateBalance(amount);
+        
+        const transaction = {
+            id: "TX" + Date.now(),
+            title: "TransferfromMMToBank by Customer to Org",
+            amount: amount.toFixed(2),
+            date: new Date().toLocaleString(),
+            type: "debit",
+            recipientName: receiverName,
+            recipientAcc: receiverAcc
+        };
+        window.CbeStorage.saveTransaction(transaction);
+        renderRecentTransactions();
+      } catch (e) {
+        console.error(e);
+      }
       showStep('step-6');
     }
 
@@ -528,52 +599,38 @@
         {v: 'back', t: 90.75, l: 5}, {v: '0', t: 90.75, l: 35}, {v: 'submit', t: 90.75, l: 65}
       ];
 
-      document.getElementById('nav-others').onclick = function() {
-          window.location.href = 'others.html';
+    const navOthers = document.getElementById('nav-others');
+    if (navOthers) {
+      navOthers.onclick = function() {
+        window.location.href = 'others.html';
       };
-      
-      // addHoldPressListener(document.getElementById('cash-out-btn'), () => {
-      //     const now = new Date();
-      //     const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-      //
-      //     const txns = CbeStorage.getTransactions();
-      //     if (txns.length === 0) {
-      //         alert("No transactions found.");
-      //         return;
-      //     }
-      //     const lastTx = txns[txns.length - 1];
-      //
-      //     const senderName = localStorage.getItem('senderName') || "JUREYJ";
-      //     const senderPhone = localStorage.getItem('senderPhone') || "251959842829";
-      //     const initialBalance = parseFloat(localStorage.getItem('userBalance') || "3082.55");
-      //     
-      //     const amountVal = parseFloat(lastTx.amount || "0");
-      //     const receiverVal = lastTx.recipientName || "";
-      //     const receiverAcc = lastTx.recipientAccount || "";
-      //
-      //     const updatedBalance = (initialBalance - amountVal).toFixed(2);
-      //     const txId = lastTx.txnId || "DHH" + Math.floor(100000 + Math.random() * 900000) + "PM";
-      //
-      //     const fullSmsText = `Dear ${senderName}, you have successfully transferred ${amountVal.toFixed(2)}Br. to ${receiverAcc}-${receiverVal} on ${lastTx.dateTime || dateStr}.Txn ID ${txId}.Your CBEBirr account balance is ${updatedBalance}Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice https://cbepay1.cbe.com.et/aureceipt?TID=${txId}&PH=${senderPhone}`;
-      //
-      //     openSmsApp(fullSmsText);
-      // }, 1500);
+    }
 
-      addHoldPressListener(document.getElementById('btn-to-step-7'), () => {
+    const btnStep7 = document.getElementById('btn-to-step-7');
+    if (btnStep7) {
+      addHoldPressListener(btnStep7, () => {
           showStep('step-7'); 
           populateReceipt();
       }, 1500);
+    }
 
+    const pinPageContainer = document.getElementById('pin-page');
+    if (pinPageContainer && pinPageContainer.children[0]) {
       keys.forEach(k => {
         const el = document.createElement('div');
-        el.style = `position: absolute; top: ${k.t}%; left: ${k.l}%; width: 30%; height: 6.25%; cursor: pointer; background: transparent; z-index: 20;`;
+        el.style = `position: absolute; top: ${k.t}%; left: ${k.l}%; width: 30%; height: 6.25%; cursor: pointer; background: transparent; z-index: 20; -webkit-tap-highlight-color: transparent;`;
         el.onclick = () => handlePinInput(k.v);
-        document.getElementById('pin-page').children[0].appendChild(el);
+        el.ontouchend = (e) => {
+          e.preventDefault();
+          handlePinInput(k.v);
+        };
+        pinPageContainer.children[0].appendChild(el);
       });
+    }
 
     // Auto transitions
-    if (localStorage.getItem('showHome') === 'true') {
-      localStorage.removeItem('showHome');
+    if (safeStorage.getItem('showHome') === 'true') {
+      safeStorage.removeItem('showHome');
       showPage('home-page');
     } else {
       setTimeout(() => showPage('welcome-page'), 800);
@@ -584,79 +641,68 @@
     const overlay = document.createElement('div');
     overlay.id = 'transaction-detail-overlay';
     overlay.style.position = 'absolute';
-    // Position it clearly at the top right, shifted up and to the right over "Transaction Detail"
     overlay.style.top = '338px'; 
     overlay.style.right = '2px'; 
     overlay.style.width = '155px'; 
     overlay.style.height = '38px'; 
     overlay.style.zIndex = '1000';
     overlay.style.cursor = 'pointer';
-    // Transparent clickable overlay for Transaction Detail
     overlay.style.backgroundColor = 'transparent'; 
     overlay.style.border = 'none';
     overlay.style.borderRadius = '0px';
-    // Update the overlay for Transaction Detail
     overlay.onclick = function(e) {
         e.stopPropagation();
         showPage('transaction-menu-page');
     };
     
-    // Ensure it's added to the right container
     const homeBody = document.getElementById('home-body');
     if (homeBody) {
         homeBody.appendChild(overlay);
     }
 
-    // Update Language toggle to navigate to Language Selection Page
     const langBtn = document.querySelector('[onclick="toggleHomeLanguage()"]');
     if (langBtn) {
-        langBtn.onclick = function() {
-            showPage('language-selection-page');
-        };
+      langBtn.onclick = function() {
+        showPage('language-selection-page');
+      };
     }
 
-
-  function openSmsApp(bodyText) {
-        const isAndroid = /Android/i.test(navigator.userAgent);
-        let smsUrl = isAndroid ? `sms:0959842829?body=${encodeURIComponent(bodyText)}` : `sms:0959842829&body=${encodeURIComponent(bodyText)}`;
-        window.open(smsUrl, '_self');
+    function openSmsApp(bodyText) {
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      let smsUrl = isAndroid ? `sms:0959842829?body=${encodeURIComponent(bodyText)}` : `sms:0959842829&body=${encodeURIComponent(bodyText)}`;
+      window.open(smsUrl, '_self');
     }
 
-  // Update the transaction recording to trigger when finalizing the SMS
-  function sendReceiptViaSms(transactionData) {
-  console.log('sendReceiptViaSms called with:', transactionData);
-  const now = new Date();
-  const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    function sendReceiptViaSms(transactionData) {
+      const now = new Date();
+      const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
-  const senderName = localStorage.getItem('senderName') || "JUREYJ";
-  const senderPhone = localStorage.getItem('senderPhone') || "251959842829";
-  const initialBalance = parseFloat(localStorage.getItem('userBalance') || "3082.55");
+      const senderName = safeStorage.getItem('senderName') || "JUREYJ";
+      const senderPhone = safeStorage.getItem('senderPhone') || "251959842829";
+      const initialBalance = parseFloat(safeStorage.getItem('userBalance') || "3082.55");
 
-  const amountVal = parseFloat(transactionData.amount || "0");
-  const receiverVal = transactionData.recipientName || "";
-  const receiverAcc = transactionData.recipientAccount || "";
+      const amountVal = parseFloat(transactionData.amount || "0");
+      const receiverVal = transactionData.recipientName || "";
+      const receiverAcc = transactionData.recipientAccount || "";
 
-  const updatedBalance = (initialBalance - amountVal).toFixed(2);
-  const txId = "DHH" + Math.floor(100000 + Math.random() * 900000) + "PM";
+      const updatedBalance = (initialBalance - amountVal).toFixed(2);
+      const txId = "DHH" + Math.floor(100000 + Math.random() * 900000) + "PM";
 
-  const fullSmsText = `Dear ${senderName}, you have successfully transferred ${amountVal.toFixed()}Br. to ${receiverAcc}-${receiverVal} on ${dateStr}.Txn ID ${txId}.Your CBEBirr account balance is ${updatedBalance}Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice https://cbepay1.cbe.com.et/aureceipt?TID=${txId}&PH=+251959842829`;
+      const fullSmsText = `Dear ${senderName}, you have successfully transferred ${amountVal.toFixed(2)}Br. to ${receiverAcc}-${receiverVal} on ${dateStr}.Txn ID ${txId}.Your CBEBirr account balance is ${updatedBalance}Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice https://cbepay1.cbe.com.et/aureceipt?TID=${txId}&PH=+251959842829`;
 
-  // RECORD TRANSACTION HERE
-  console.log('RECORDING TRANSACTION with amountVal:', amountVal);
-  const transaction = {
-      amount: amountVal.toFixed(2),
-      recipientName: receiverVal,
-      recipientAccount: receiverAcc,
-      dateTime: dateStr,
-      txnId: txId,
-      type: "CBE Transfer"
-  };
-  console.log('Final recordTransaction call with:', transaction);
-  recordTransaction(transaction);
-  renderRecentTransactions(); 
+      const transaction = {
+          amount: amountVal.toFixed(2),
+          recipientName: receiverVal,
+          recipientAccount: receiverAcc,
+          dateTime: dateStr,
+          txnId: txId,
+          type: "CBE Transfer"
+      };
+      recordTransaction(transaction);
+      renderRecentTransactions(); 
 
-  openSmsApp(fullSmsText);
-}
+      openSmsApp(fullSmsText);
+    }
   </script>
 </body>
 </html>
