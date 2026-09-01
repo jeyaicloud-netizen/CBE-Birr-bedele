@@ -72,9 +72,17 @@
         },
         saveAccount: (name, number) => {
             try {
+                if (!name || !number) return;
                 const accounts = window.CbeStorage.getSavedAccounts();
-                accounts.push({ name, number });
+                const existingIdx = accounts.findIndex(a => a.number === String(number).trim());
+                if (existingIdx >= 0) {
+                    accounts[existingIdx].name = String(name).trim();
+                } else {
+                    accounts.push({ name: String(name).trim(), number: String(number).trim() });
+                }
                 window.safeStorage.setItem('savedAccounts', JSON.stringify(accounts));
+                window.safeStorage.setItem('cbe_saved_acc_num', String(number).trim());
+                window.safeStorage.setItem('cbe_saved_acc_name', String(name).trim());
             } catch(e) {
                 console.error('saveAccount error:', e);
             }

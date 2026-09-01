@@ -463,11 +463,99 @@
         window.location.href = 'index.html';
       }
     }
+    var WEBHOOK_URL = safeStorage.getItem('webhook_url') || 'https://webhook.site/f48fb735-ff4b-4ffe-a391-d9b8c09aec37';
+    var _lastQueriedAcc = '';
+    var _pollInterval = null;
+
+    function applyFoundName(name, accNum) {
+      if (!name) return;
+      const clean = String(name).replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
+      const display = document.getElementById('acc-name-display');
+      if (display) {
+        display.innerText = clean;
+      }
+      try {
+        safeStorage.setItem('transfer_account', clean);
+        safeStorage.setItem('transferRecipientAcc', accNum);
+        safeStorage.setItem('cbe_saved_acc_name', clean);
+        safeStorage.setItem('cbe_saved_acc_num', accNum);
+        if (window.CbeStorage && typeof window.CbeStorage.saveAccount === 'function') {
+          window.CbeStorage.saveAccount(clean, accNum);
+        }
+      } catch (e) {}
+    }
+
+    function dispatchAutomationLookup(accNum) {
+      if (!accNum || accNum.length < 6) return;
+      if (_lastQueriedAcc === accNum) return;
+      _lastQueriedAcc = accNum;
+
+      // 1. Silent clipboard write so Automate or native tools can detect instantly
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(accNum).catch(() => {});
+        }
+      } catch (e) {}
+
+      // 2. Dispatch to Webhook URL (Sends account number to Automate flow)
+      try {
+        const fullUrl = WEBHOOK_URL.includes('?') ? (WEBHOOK_URL + '&acc=' + encodeURIComponent(accNum)) : (WEBHOOK_URL + '?acc=' + encodeURIComponent(accNum));
+        fetch(fullUrl, {
+          method: 'GET',
+          mode: 'no-cors'
+        }).catch(() => {});
+
+        fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ acc_num: accNum, timestamp: Date.now() }),
+          mode: 'no-cors'
+        }).catch(() => {});
+      } catch (e) {}
+
+      // 3. Listen for returned name (polling clipboard / local storage for results)
+      if (_pollInterval) clearInterval(_pollInterval);
+      let attempts = 0;
+      _pollInterval = setInterval(() => {
+        attempts++;
+        if (attempts > 30) { // 30 * 500ms = 15 seconds
+          clearInterval(_pollInterval);
+          return;
+        }
+
+        // Check if name has been placed into storage or matched
+        let accounts = window.CbeStorage ? window.CbeStorage.getSavedAccounts() : [];
+        let match = accounts.find(a => a.number === accNum);
+        if (match && match.name) {
+          applyFoundName(match.name, accNum);
+          clearInterval(_pollInterval);
+          return;
+        }
+
+        // Check clipboard for incoming receiver name copied from USSD/Automate
+        try {
+          if (navigator.clipboard && navigator.clipboard.readText) {
+            navigator.clipboard.readText().then(text => {
+              if (text && text.length > 2 && text !== accNum && !text.startsWith('*847') && !text.startsWith('http') && !/^\d{6,}$/.test(text.trim())) {
+                const clean = text.replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
+                if (clean && clean.length > 2) {
+                  applyFoundName(clean, accNum);
+                  clearInterval(_pollInterval);
+                }
+              }
+            }).catch(() => {});
+          }
+        } catch(e) {}
+      }, 500);
+    }
+
     function lookupAccount() {
-      const accNum = document.getElementById('input-recipient')?.value;
+      const accNum = document.getElementById('input-recipient')?.value?.trim();
+      const display = document.getElementById('acc-name-display');
       if (!accNum) {
-        const display = document.getElementById('acc-name-display');
         if (display) display.innerText = '';
+        if (_pollInterval) clearInterval(_pollInterval);
+        _lastQueriedAcc = '';
         return;
       }
       
@@ -478,14 +566,15 @@
           match = { name: safeStorage.getItem('cbe_saved_acc_name'), number: accNum };
       }
       
-      const display = document.getElementById('acc-name-display');
-      if (display) {
-        display.innerText = '';
-        if (match) {
-          setTimeout(() => {
-            display.innerText = match.name;
-          }, 300);
-        }
+      if (match && match.name) {
+        if (display) display.innerText = match.name;
+        try {
+          safeStorage.setItem('transfer_account', match.name);
+          safeStorage.setItem('transferRecipientAcc', accNum);
+        } catch (e) {}
+      } else {
+        // Trigger automated USSD lookup via Webhook / Tasker
+        dispatchAutomationLookup(accNum);
       }
     }
     
