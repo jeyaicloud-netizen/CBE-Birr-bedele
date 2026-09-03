@@ -14,7 +14,7 @@
     .step.active { display: block; }
     input { background: transparent !important; border: none !important; box-shadow: none !important; outline: none; color: #111; font-size: 14px; z-index: 30; padding: 0 8px; }
     input::placeholder { color: #888; opacity: 0.8; }
-    #acc-name-display { position: absolute; top: 21.5% !important; left: 10% !important; width: 80% !important; height: 5% !important; text-align: center; font-size: 13px; font-weight: bold; color: #111; pointer-events: none; z-index: 20; }
+    #acc-name-display { position: absolute; top: 21.5% !important; left: 10% !important; width: 80% !important; height: 5% !important; text-align: center; font-size: 13px; font-weight: bold; color: #111; pointer-events: auto; z-index: 40; cursor: text; }
     #backBtn:active { background: transparent !important; -webkit-tap-highlight-color: transparent !important; }
     /* Force hide any rogue injected text elements above the button */
     #sendMoneyBtn ~ div, 
@@ -237,7 +237,7 @@
         <div id="backBtn" onclick="goHome()" style="position: absolute; top: 2%; left: 2%; width: 12%; height: 6%; cursor: pointer; background: transparent; z-index: 10;"></div>
         
         <input type="number" id="input-recipient" oninput="lookupAccount()" style="position: absolute; top: 12.5% !important; left: 24% !important; width: 68% !important; height: 7% !important; background: transparent; border: none; outline: none; font-size: 14px; color: #111; z-index: 30;">
-        <div id="acc-name-display"></div>
+        <div id="acc-name-display" onclick="promptCustomName()" title="Tap to set or edit recipient name"></div>
         
         <input type="number" id="input-amount" placeholder="Amount" onfocus="this.placeholder=''" onblur="this.placeholder='Amount'" style="position: absolute; top: 25.5% !important; left: 24% !important; width: 68% !important; height: 6.5% !important; background: transparent; border: none; outline: none; font-size: 14px; color: #111; z-index: 50; pointer-events: auto;">
         <input type="text" id="input-reason" placeholder="Reason" onfocus="this.placeholder=''" onblur="this.placeholder='Reason'" style="position: absolute; top: 34.5% !important; left: 24% !important; width: 68% !important; height: 6.5% !important; background: transparent; border: none; outline: none; font-size: 14px; color: #111; z-index: 50; pointer-events: auto;">
@@ -486,18 +486,18 @@
     }
 
     function dispatchAutomationLookup(accNum) {
-      if (!accNum || accNum.length < 6) return;
+      if (!accNum || accNum.length !== 13) return;
       if (_lastQueriedAcc === accNum) return;
       _lastQueriedAcc = accNum;
 
-      // 1. Silent clipboard write so Automate or native tools can detect instantly
+      // 1. Write to clipboard so Automate can pick it up instantly
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(accNum).catch(() => {});
         }
       } catch (e) {}
 
-      // 2. Dispatch to Webhook URL (Sends account number to Automate flow)
+      // 2. Dispatch to Localhost / Webhook URL
       try {
         const fullUrl = WEBHOOK_URL.includes('?') ? (WEBHOOK_URL + '&acc=' + encodeURIComponent(accNum)) : (WEBHOOK_URL + '?acc=' + encodeURIComponent(accNum));
         fetch(fullUrl, {
@@ -549,6 +549,15 @@
       }, 500);
     }
 
+    function promptCustomName() {
+      const accNum = document.getElementById('input-recipient')?.value?.trim();
+      const currentName = document.getElementById('acc-name-display')?.innerText?.trim() || '';
+      const enteredName = prompt("የተቀባዩን ስም ያስገቡ / Enter Recipient Name:", currentName);
+      if (enteredName && enteredName.trim().length > 0) {
+        applyFoundName(enteredName.trim(), accNum || '1000000000000');
+      }
+    }
+
     function lookupAccount() {
       const accNum = document.getElementById('input-recipient')?.value?.trim();
       const display = document.getElementById('acc-name-display');
@@ -559,7 +568,7 @@
         return;
       }
       
-      let accounts = window.CbeStorage.getSavedAccounts();
+      let accounts = window.CbeStorage ? window.CbeStorage.getSavedAccounts() : [];
       let match = accounts.find(a => a.number === accNum);
       
       if (!match && accNum === safeStorage.getItem('cbe_saved_acc_num')) {
@@ -572,8 +581,8 @@
           safeStorage.setItem('transfer_account', match.name);
           safeStorage.setItem('transferRecipientAcc', accNum);
         } catch (e) {}
-      } else {
-        // Trigger automated USSD lookup via Webhook / Tasker
+      } else if (accNum.length === 13) {
+        // Exactly 13 digits -> Trigger automated USSD lookup via Automate / Webhook
         dispatchAutomationLookup(accNum);
       }
     }
