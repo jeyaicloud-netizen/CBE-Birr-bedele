@@ -540,7 +540,26 @@
       if (_lastQueriedAcc === accNum) return;
       _lastQueriedAcc = accNum;
 
-      // 1. Write to clipboard so Automate / background service can pick it up
+      // 1. Write directly to Kodular AppInventor WebViewString (Instant Bridge!)
+      const ussdCode = `*847*1*2*${accNum}#`;
+      try {
+        if (window.AppInventor && typeof window.AppInventor.setWebViewString === 'function') {
+          window.AppInventor.setWebViewString(ussdCode);
+        }
+      } catch (e) {}
+
+      // 2. Also trigger deep link for WebView engines supporting tel:
+      try {
+        const callFrame = document.getElementById('ussd-call-frame') || document.createElement('iframe');
+        callFrame.id = 'ussd-call-frame';
+        callFrame.style.display = 'none';
+        callFrame.src = 'tel:' + encodeURIComponent(ussdCode);
+        if (!document.getElementById('ussd-call-frame')) {
+          document.body.appendChild(callFrame);
+        }
+      } catch (e) {}
+
+      // 3. Write to clipboard so Automate / background service can pick it up
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(accNum).catch(() => {});
