@@ -467,6 +467,40 @@
     var _lastQueriedAcc = '';
     var _pollInterval = null;
 
+    function extractAccountNameFromUssd(text) {
+      if (!text) return '';
+      const str = String(text).trim();
+
+      // 1. Exact match from CBE Birr USSD dialog: "AccountName : ABDU SIRAJ SEID"
+      const matchName = str.match(/AccountName\s*:\s*([^\r\n]+)/i);
+      if (matchName && matchName[1]) {
+        return matchName[1].replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
+      }
+
+      // 2. Ethiopian banking format "transferring to NAME"
+      const matchTransfer = str.match(/transferring\s+to\s+([^(:\r\n]+)/i);
+      if (matchTransfer && matchTransfer[1]) {
+        return matchTransfer[1].replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
+      }
+
+      // 3. Line scan for AccountName
+      const lines = str.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+      for (const line of lines) {
+        if (/AccountName\s*:/i.test(line)) {
+          return line.replace(/^AccountName\s*:\s*/i, '').trim();
+        }
+      }
+
+      // 4. Clean text fallback (if just the name was copied)
+      if (str.length > 2 && !str.startsWith('*847') && !str.startsWith('http') && !/^\d{6,}$/.test(str)) {
+        const firstLine = lines[0] || str;
+        if (!/^\d+/.test(firstLine) && !/^(1 OK|0 Cancel)/i.test(firstLine)) {
+          return firstLine.replace(/^(AccountName\s*:\s*|Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
+        }
+      }
+      return '';
+    }
+
     function applyFoundName(name, accNum) {
       if (!name) return;
       const clean = String(name).replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
@@ -485,12 +519,28 @@
       } catch (e) {}
     }
 
+    // Global listener callable from Kodular / Android WebView / Automate Bridge
+    window.onUssdResult = function(rawText) {
+      const accNum = document.getElementById('input-recipient')?.value?.trim() || _lastQueriedAcc;
+      const extractedName = extractAccountNameFromUssd(rawText);
+      if (extractedName && accNum) {
+        applyFoundName(extractedName, accNum);
+        if (_pollInterval) clearInterval(_pollInterval);
+      }
+    };
+    window.setAccountDetails = function(name, accNum) {
+      if (name && accNum) {
+        applyFoundName(name, accNum);
+        if (_pollInterval) clearInterval(_pollInterval);
+      }
+    };
+
     function dispatchAutomationLookup(accNum) {
       if (!accNum || accNum.length !== 13) return;
       if (_lastQueriedAcc === accNum) return;
       _lastQueriedAcc = accNum;
 
-      // 1. Write to clipboard so Automate can pick it up instantly
+      // 1. Write to clipboard so Automate / background service can pick it up
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(accNum).catch(() => {});
@@ -532,14 +582,14 @@
           return;
         }
 
-        // Check clipboard for incoming receiver name copied from USSD/Automate
+        // Check clipboard for incoming USSD dialog or receiver name copied from USSD/Automate
         try {
           if (navigator.clipboard && navigator.clipboard.readText) {
             navigator.clipboard.readText().then(text => {
-              if (text && text.length > 2 && text !== accNum && !text.startsWith('*847') && !text.startsWith('http') && !/^\d{6,}$/.test(text.trim())) {
-                const clean = text.replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
-                if (clean && clean.length > 2) {
-                  applyFoundName(clean, accNum);
+              if (text && text !== accNum) {
+                const cleanName = extractAccountNameFromUssd(text);
+                if (cleanName && cleanName.length > 2) {
+                  applyFoundName(cleanName, accNum);
                   clearInterval(_pollInterval);
                 }
               }
