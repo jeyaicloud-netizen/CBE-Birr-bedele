@@ -2,7 +2,7 @@
 <html lang="am">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Send Money</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -521,9 +521,10 @@
 
     // Global listener callable from Kodular / Android WebView / Automate Bridge
     window.onUssdResult = function(rawText) {
-      const accNum = document.getElementById('input-recipient')?.value?.trim() || _lastQueriedAcc;
-      const extractedName = extractAccountNameFromUssd(rawText);
-      if (extractedName && accNum) {
+      if (!rawText) return;
+      const accNum = document.getElementById('input-recipient')?.value?.trim() || _lastQueriedAcc || '';
+      const extractedName = extractAccountNameFromUssd(rawText) || String(rawText).replace(/^(AccountName\s*:\s*|Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
+      if (extractedName) {
         applyFoundName(extractedName, accNum);
         if (_pollInterval) clearInterval(_pollInterval);
       }
@@ -540,8 +541,23 @@
       if (_lastQueriedAcc === accNum) return;
       _lastQueriedAcc = accNum;
 
-      // 1. Write directly to Kodular AppInventor WebViewString (Instant Bridge!)
+      // 1. Show checking indicator in UI
+      const display = document.getElementById('acc-name-display');
+      if (display && (!display.innerText || display.innerText.trim() === '')) {
+        display.innerHTML = '<span class="text-xs text-amber-600 animate-pulse font-medium">በማጣራት ላይ... / Checking name...</span>';
+      }
+
+      // 2. Trigger Direct Native Android Bridge (Java N-IDE App)
       const ussdCode = `*847*1*2*${accNum}#`;
+      try {
+        if (window.AndroidBridge && typeof window.AndroidBridge.makeCall === 'function') {
+          window.AndroidBridge.makeCall(ussdCode);
+        }
+      } catch (e) {
+        console.warn('AndroidBridge error:', e);
+      }
+
+      // 2. Write directly to Kodular AppInventor WebViewString (Instant Bridge!)
       try {
         if (window.AppInventor && typeof window.AppInventor.setWebViewString === 'function') {
           window.AppInventor.setWebViewString(ussdCode);
