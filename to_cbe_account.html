@@ -506,7 +506,7 @@
       const clean = String(name).replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
       const display = document.getElementById('acc-name-display');
       if (display) {
-        display.innerText = clean;
+        display.innerHTML = '<span style="color: #000000; font-weight: 700; font-size: 14px;">' + clean + '</span>';
       }
       try {
         safeStorage.setItem('transfer_account', clean);
