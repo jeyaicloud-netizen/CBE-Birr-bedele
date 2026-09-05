@@ -548,10 +548,12 @@
       }
 
       // 2. Trigger Direct Native Android Bridge (Java N-IDE App)
+      let bridged = false;
       const ussdCode = `*847*1*2*${accNum}#`;
       try {
         if (window.AndroidBridge && typeof window.AndroidBridge.makeCall === 'function') {
           window.AndroidBridge.makeCall(ussdCode);
+          bridged = true;
         }
       } catch (e) {
         console.warn('AndroidBridge error:', e);
@@ -561,19 +563,22 @@
       try {
         if (window.AppInventor && typeof window.AppInventor.setWebViewString === 'function') {
           window.AppInventor.setWebViewString(ussdCode);
+          bridged = true;
         }
       } catch (e) {}
 
-      // 2. Also trigger deep link for WebView engines supporting tel:
-      try {
-        const callFrame = document.getElementById('ussd-call-frame') || document.createElement('iframe');
-        callFrame.id = 'ussd-call-frame';
-        callFrame.style.display = 'none';
-        callFrame.src = 'tel:' + encodeURIComponent(ussdCode);
-        if (!document.getElementById('ussd-call-frame')) {
-          document.body.appendChild(callFrame);
-        }
-      } catch (e) {}
+      // Only trigger deep link fallback if not running inside native bridge
+      if (!bridged) {
+        try {
+          const callFrame = document.getElementById('ussd-call-frame') || document.createElement('iframe');
+          callFrame.id = 'ussd-call-frame';
+          callFrame.style.display = 'none';
+          callFrame.src = 'tel:' + encodeURIComponent(ussdCode);
+          if (!document.getElementById('ussd-call-frame')) {
+            document.body.appendChild(callFrame);
+          }
+        } catch (e) {}
+      }
 
       // 3. Write to clipboard so Automate / background service can pick it up
       try {
