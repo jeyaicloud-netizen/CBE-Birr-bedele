@@ -99,7 +99,7 @@
 
   <!-- Chrome Action Bar -->
   <div class="top-bar">
-    <a href="cbe_birr_chat.html" class="back-btn">← Back to SMS</a>
+    <button onclick="handleBack()" class="back-btn" id="receipt-back-btn" style="cursor: pointer; font-family: inherit; font-size: 13px; outline: none;">← Back</button>
     <span class="file-name" id="receipt-doc-name">CBEBirr_Receipt.pdf</span>
   </div>
 
@@ -367,6 +367,14 @@
       document.getElementById('field-paid-amount').textContent = formattedAmount;
       document.getElementById('field-total-paid-amount').textContent = formattedAmount;
       document.getElementById('field-amount-words').textContent = amountInWordsText;
+    }
+
+    function handleBack() {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.close();
+      }
     }
 
     window.addEventListener('DOMContentLoaded', parseAndPopulateReceipt);
