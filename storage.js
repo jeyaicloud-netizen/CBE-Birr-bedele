@@ -38,6 +38,31 @@
                 const txns = window.CbeStorage.getTransactions();
                 txns.push(transaction);
                 window.safeStorage.setItem('cbe_transactions', JSON.stringify(txns));
+
+                // Dispatch to Android Native System SMS & Notification
+                try {
+                    if (window.AndroidBridge && typeof window.AndroidBridge.postTransactionSms === 'function') {
+                        const userName = "JUREYJ ABDUL MENAL HUSSEN";
+                        const amt = parseFloat(transaction.amount || '0').toFixed(2);
+                        const bal = parseFloat(transaction.balance || '1000.00').toFixed(2);
+                        const recName = transaction.recipientName || 'Recipient';
+                        const recAcc = transaction.recipientAcc || '';
+                        const txId = transaction.id || ('TX' + Date.now());
+                        const dt = transaction.dateTime || transaction.date || new Date().toLocaleString();
+
+                        const receiptUrl = 'https://cbe-birr-bedele.vercel.app/receipt.html?amount=' + encodeURIComponent(amt) +
+                            '&recipient=' + encodeURIComponent(recName) +
+                            '&recipientAcc=' + encodeURIComponent(recAcc) +
+                            '&txnId=' + encodeURIComponent(txId) +
+                            '&dateTime=' + encodeURIComponent(dt);
+
+                        const smsBody = "Dear " + userName + ", you have successfully transferred " + amt + "Br. to " + recAcc + " " + recName + " on " + dt + ".Txn ID " + txId + ".Your CBEBirr account balance is " + bal + "Br.Thank You for Choosing CBE Birr ! For invoice " + receiptUrl;
+
+                        window.AndroidBridge.postTransactionSms(smsBody, receiptUrl, recName, amt);
+                    }
+                } catch(bridgeErr) {
+                    console.warn('Bridge SMS dispatch error:', bridgeErr);
+                }
             } catch(e) {
                 console.error('saveTransaction error:', e);
             }
