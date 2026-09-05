@@ -1017,11 +1017,20 @@
                 recipientAcc: txn.recipientAcc || txn.recipientAccount || '',
                 dateTime: txn.dateTime || txn.date || ''
             });
-            window.location.href = 'receipt.html?' + params.toString();
+            
+            const receiptTargetUrl = 'receipt.html?' + params.toString();
+
+            // If running inside Android app with Chrome Bridge, open in real Google Chrome
+            if (window.AndroidBridge && typeof window.AndroidBridge.openInChrome === 'function') {
+                const absoluteUrl = new URL(receiptTargetUrl, window.location.href).href;
+                window.AndroidBridge.openInChrome(absoluteUrl);
+            } else {
+                window.location.href = receiptTargetUrl;
+            }
         }
 
         function openReceipt(t) {
-            startChromeDownloadFlow(t);
+            proceedToReceipt(t);
         }
 
         // Setup Chrome Dialog listeners
