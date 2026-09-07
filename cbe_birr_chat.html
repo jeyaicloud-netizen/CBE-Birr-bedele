@@ -723,7 +723,7 @@
         <!-- Top Header Bar -->
         <header class="chat-header">
             <div class="header-left">
-                <a href="messages_screen.html" class="back-btn">←</a>
+                <a href="messages_screen.html" class="back-btn" onclick="if (window.history.length > 1) { window.history.back(); return false; }">←</a>
                 <div class="avatar">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
@@ -1143,6 +1143,29 @@
                 </div>
             `;
             
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('amount') || urlParams.has('recipient')) {
+                const pAmt = urlParams.get('amount') || '240.00';
+                const pRec = urlParams.get('recipient') || 'Recipient';
+                const pAcc = urlParams.get('recipientAcc') || '1000274326143';
+                const pTxId = urlParams.get('txnId') || 'DHT61MOJTU6,FT262413JRB4';
+                const pDt = urlParams.get('dateTime') || new Date().toLocaleString();
+                const pBal = urlParams.get('balance') || safeStorage.getItem('accountBalance') || '27.53';
+                
+                const exists = txns.some(t => t.id === pTxId || (t.amount === pAmt && t.recipientName === pRec));
+                if (!exists) {
+                    txns.push({
+                        id: pTxId,
+                        amount: pAmt,
+                        recipientName: pRec,
+                        recipientAcc: pAcc,
+                        dateTime: pDt,
+                        balance: pBal,
+                        phone: "251959842829"
+                    });
+                }
+            }
+
             if (!txns || txns.length === 0) {
                 const currentStoredBalance = safeStorage.getItem('accountBalance') || safeStorage.getItem('user_balance') || '27.53';
                 txns = [
