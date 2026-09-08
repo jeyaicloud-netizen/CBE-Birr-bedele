@@ -38,31 +38,6 @@
                 const txns = window.CbeStorage.getTransactions();
                 txns.push(transaction);
                 window.safeStorage.setItem('cbe_transactions', JSON.stringify(txns));
-
-                // Dispatch to Android Native System SMS & Notification
-                try {
-                    if (window.AndroidBridge && typeof window.AndroidBridge.postTransactionSms === 'function') {
-                        const userName = "JUREYJ ABDUL MENAL HUSSEN";
-                        const amt = parseFloat(transaction.amount || '0').toFixed(2);
-                        const bal = parseFloat(transaction.balance || '1000.00').toFixed(2);
-                        const recName = transaction.recipientName || 'Recipient';
-                        const recAcc = transaction.recipientAcc || '';
-                        const txId = transaction.id || ('TX' + Date.now());
-                        const dt = transaction.dateTime || transaction.date || new Date().toLocaleString();
-
-                        const receiptUrl = 'https://cbe-birr-bedele.vercel.app/receipt.html?amount=' + encodeURIComponent(amt) +
-                            '&recipient=' + encodeURIComponent(recName) +
-                            '&recipientAcc=' + encodeURIComponent(recAcc) +
-                            '&txnId=' + encodeURIComponent(txId) +
-                            '&dateTime=' + encodeURIComponent(dt);
-
-                        const smsBody = "Dear " + userName + ", you have successfully transferred " + amt + "Br. to " + recAcc + " " + recName + " on " + dt + ".Txn ID " + txId + ".Your CBEBirr account balance is " + bal + "Br.Thank You for Choosing CBE Birr ! For invoice " + receiptUrl;
-
-                        window.AndroidBridge.postTransactionSms(smsBody, receiptUrl, recName, amt);
-                    }
-                } catch(bridgeErr) {
-                    console.warn('Bridge SMS dispatch error:', bridgeErr);
-                }
             } catch(e) {
                 console.error('saveTransaction error:', e);
             }
@@ -112,5 +87,39 @@
                 console.error('saveAccount error:', e);
             }
         }
+    };
+
+    // Global USSD Bridge Receiver accessible from any page
+    window.setAccountDetails = function(name, number) {
+        if (!name) return;
+        const clean = String(name).replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
+        const acc = number ? String(number).trim() : (window.safeStorage.getItem('cbe_saved_acc_num') || '');
+        window.safeStorage.setItem('transfer_account', clean);
+        window.safeStorage.setItem('cbe_saved_acc_name', clean);
+        if (acc) {
+            window.safeStorage.setItem('transferRecipientAcc', acc);
+            window.safeStorage.setItem('cbe_saved_acc_num', acc);
+            window.CbeStorage.saveAccount(clean, acc);
+        }
+        const display = document.getElementById('acc-name-display');
+        if (display) {
+            display.innerHTML = '<span style="color: #000000; font-weight: 700; font-size: 14px;">' + clean + '</span>';
+        }
+        const input = document.getElementById('input-recipient');
+        if (input && acc && !input.value) {
+            input.value = acc;
+        }
+    };
+
+    window.onUssdResult = function(rawText, passedAcc) {
+        if (!rawText) return;
+        let cleanName = String(rawText).trim();
+        const matchName = cleanName.match(/(?:AccountName|Account\s*Name|Customer\s*Name|transferring\s*to|የተጠቃሚ\s*ስም)\s*[:\-]?\s*([^\r\n]+)/i);
+        if (matchName && matchName[1]) {
+            cleanName = matchName[1].trim();
+        }
+        cleanName = cleanName.replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
+        const acc = passedAcc || (document.getElementById('input-recipient') ? document.getElementById('input-recipient').value.trim() : '') || window.safeStorage.getItem('cbe_saved_acc_num') || '';
+        window.setAccountDetails(cleanName, acc);
     };
 })();

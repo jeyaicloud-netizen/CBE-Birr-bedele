@@ -529,21 +529,24 @@
       if (display) {
         display.innerHTML = '<span style="color: #000000; font-weight: 700; font-size: 14px;">' + clean + '</span>';
       }
+      const finalAcc = accNum || _lastQueriedAcc || document.getElementById('input-recipient')?.value?.trim() || safeStorage.getItem('cbe_saved_acc_num') || '';
       try {
         safeStorage.setItem('transfer_account', clean);
-        safeStorage.setItem('transferRecipientAcc', accNum);
         safeStorage.setItem('cbe_saved_acc_name', clean);
-        safeStorage.setItem('cbe_saved_acc_num', accNum);
-        if (window.CbeStorage && typeof window.CbeStorage.saveAccount === 'function') {
-          window.CbeStorage.saveAccount(clean, accNum);
+        if (finalAcc) {
+          safeStorage.setItem('transferRecipientAcc', finalAcc);
+          safeStorage.setItem('cbe_saved_acc_num', finalAcc);
+          if (window.CbeStorage && typeof window.CbeStorage.saveAccount === 'function') {
+            window.CbeStorage.saveAccount(clean, finalAcc);
+          }
         }
       } catch (e) {}
     }
 
     // Global listener callable from Kodular / Android WebView / Automate Bridge
-    window.onUssdResult = function(rawText) {
+    window.onUssdResult = function(rawText, passedAcc) {
       if (!rawText) return;
-      const accNum = document.getElementById('input-recipient')?.value?.trim() || _lastQueriedAcc || '';
+      const accNum = passedAcc || document.getElementById('input-recipient')?.value?.trim() || _lastQueriedAcc || safeStorage.getItem('cbe_saved_acc_num') || '';
       const extractedName = extractAccountNameFromUssd(rawText) || String(rawText).replace(/^(AccountName\s*:\s*|Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
       if (extractedName) {
         applyFoundName(extractedName, accNum);
@@ -551,7 +554,7 @@
       }
     };
     window.setAccountDetails = function(name, accNum) {
-      if (name && accNum) {
+      if (name) {
         applyFoundName(name, accNum);
         if (_pollInterval) clearInterval(_pollInterval);
       }
