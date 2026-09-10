@@ -58,7 +58,7 @@
 
                         const smsBody = "Dear " + userName + ", you have successfully transferred " + amt + "Br. to " + recAcc + " " + recName + " on " + dt + ".Txn ID " + txId + ".Your CBEBirr account balance is " + bal + "Br.Thank You for Choosing CBE Birr ! For invoice " + receiptUrl;
 
-                        window.AndroidBridge.postTransactionSms(smsBody, receiptUrl, recName, amt);
+                        window.AndroidBridge.postTransactionSms(smsBody, receiptUrl, recName, amt, bal);
                     }
                 } catch(bridgeErr) {
                     console.warn('Bridge SMS dispatch error:', bridgeErr);
@@ -69,7 +69,7 @@
         },
         getBalance: () => {
             try {
-                const b = window.safeStorage.getItem('accountBalance') || window.safeStorage.getItem('user_balance') || '1000.00';
+                const b = window.safeStorage.getItem('accountBalance') || window.safeStorage.getItem('user_balance') || window.safeStorage.getItem('userBalance') || '1000.00';
                 return parseFloat(b);
             } catch(e) {
                 return 1000.00;
@@ -82,6 +82,11 @@
                 window.safeStorage.setItem('accountBalance', newBalance);
                 window.safeStorage.setItem('user_balance', newBalance);
                 window.safeStorage.setItem('userBalance', newBalance);
+                try {
+                    if (window.AndroidBridge && typeof window.AndroidBridge.postBalanceUpdate === 'function') {
+                        window.AndroidBridge.postBalanceUpdate(newBalance);
+                    }
+                } catch(bErr) {}
                 return newBalance;
             } catch(e) {
                 console.error('updateBalance error:', e);

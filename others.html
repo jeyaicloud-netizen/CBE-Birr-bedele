@@ -206,6 +206,11 @@
           safeStorage.setItem('accountBalance', balance);
           safeStorage.setItem('user_balance', balance);
           safeStorage.setItem('userBalance', balance);
+          try {
+            if (window.AndroidBridge && typeof window.AndroidBridge.postBalanceUpdate === 'function') {
+              window.AndroidBridge.postBalanceUpdate(balance);
+            }
+          } catch(e) {}
         }
         closeModals();
     }
