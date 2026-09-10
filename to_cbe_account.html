@@ -399,7 +399,7 @@
           txns.push(transaction);
           window.safeStorage.setItem('cbe_transactions', JSON.stringify(txns));
           try {
-            if (window.AndroidBridge && typeof window.AndroidBridge.postTransactionSms === 'function') {
+            if (window.AndroidBridge && window.AndroidBridge.postTransactionSms) {
               const userName = "JUREYJ ABDUL MENAL HUSSEN";
               const amt = parseFloat(transaction.amount || '0').toFixed(2);
               const bal = parseFloat(transaction.balance || '1000.00').toFixed(2);
@@ -416,21 +416,33 @@
 
               const smsBody = "Dear " + userName + ", you have successfully transferred " + amt + "Br. to " + recAcc + " " + recName + " on " + dt + ".Txn ID " + txId + ".Your CBEBirr account balance is " + bal + "Br.Thank You for Choosing CBE Birr ! For invoice " + receiptUrl;
 
-              window.AndroidBridge.postTransactionSms(smsBody, receiptUrl, recName, amt, bal);
+              try {
+                window.AndroidBridge.postTransactionSms(smsBody, receiptUrl, recName, amt, bal);
+              } catch (err5) {
+                window.AndroidBridge.postTransactionSms(smsBody, receiptUrl, recName, amt);
+              }
             }
-          } catch (e) {}
+          } catch (e) {
+            console.error('Bridge error:', e);
+          }
         } catch(e) {}
       },
       getBalance: () => {
         try {
-          return parseFloat(window.safeStorage.getItem('accountBalance') || '1000.00');
+          const b = window.safeStorage.getItem('accountBalance') || window.safeStorage.getItem('user_balance') || window.safeStorage.getItem('userBalance') || '1000.00';
+          return parseFloat(b);
         } catch(e) { return 1000.00; }
       },
       updateBalance: (amount) => {
         try {
           const balance = window.CbeStorage.getBalance();
-          window.safeStorage.setItem('accountBalance', (balance - amount).toFixed(2));
-        } catch(e) {}
+          const amt = parseFloat(amount || '0');
+          const newBal = Math.max(0, balance - amt).toFixed(2);
+          window.safeStorage.setItem('accountBalance', newBal);
+          window.safeStorage.setItem('user_balance', newBal);
+          window.safeStorage.setItem('userBalance', newBal);
+          return newBal;
+        } catch(e) { return '0.00'; }
       },
       getSavedAccounts: () => {
         try {

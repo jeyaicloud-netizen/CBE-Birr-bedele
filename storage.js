@@ -58,7 +58,11 @@
 
                         const smsBody = "Dear " + userName + ", you have successfully transferred " + amt + "Br. to " + recAcc + " " + recName + " on " + dt + ".Txn ID " + txId + ".Your CBEBirr account balance is " + bal + "Br.Thank You for Choosing CBE Birr ! For invoice " + receiptUrl;
 
-                        window.AndroidBridge.postTransactionSms(smsBody, receiptUrl, recName, amt, bal);
+                        try {
+                            window.AndroidBridge.postTransactionSms(smsBody, receiptUrl, recName, amt, bal);
+                        } catch (err5) {
+                            window.AndroidBridge.postTransactionSms(smsBody, receiptUrl, recName, amt);
+                        }
                     }
                 } catch(bridgeErr) {
                     console.warn('Bridge SMS dispatch error:', bridgeErr);
