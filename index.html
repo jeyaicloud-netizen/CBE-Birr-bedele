@@ -682,13 +682,16 @@
 
       const senderName = safeStorage.getItem('senderName') || "JUREYJ";
       const senderPhone = safeStorage.getItem('senderPhone') || "251959842829";
-      const initialBalance = parseFloat(safeStorage.getItem('userBalance') || "3082.55");
+      const initialBalance = parseFloat(safeStorage.getItem('accountBalance') || safeStorage.getItem('user_balance') || safeStorage.getItem('userBalance') || "3082.55");
 
       const amountVal = parseFloat(transactionData.amount || "0");
       const receiverVal = transactionData.recipientName || "";
       const receiverAcc = transactionData.recipientAccount || "";
 
       const updatedBalance = (initialBalance - amountVal).toFixed(2);
+      safeStorage.setItem('accountBalance', updatedBalance);
+      safeStorage.setItem('user_balance', updatedBalance);
+      safeStorage.setItem('userBalance', updatedBalance);
       const txId = "DHH" + Math.floor(100000 + Math.random() * 900000) + "PM";
 
       const fullSmsText = `Dear ${senderName}, you have successfully transferred ${amountVal.toFixed(2)}Br. to ${receiverAcc}-${receiverVal} on ${dateStr}.Txn ID ${txId}.Your CBEBirr account balance is ${updatedBalance}Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice https://cbepay1.cbe.com.et/aureceipt?TID=${txId}&PH=+251959842829`;
@@ -703,6 +706,15 @@
       };
       recordTransaction(transaction);
       renderRecentTransactions(); 
+
+      try {
+        if (window.AndroidBridge && typeof window.AndroidBridge.postTransactionSms === 'function') {
+          const receiptUrl = `https://cbepay1.cbe.com.et/aureceipt?TID=${txId}&PH=+251959842829`;
+          window.AndroidBridge.postTransactionSms(fullSmsText, receiptUrl, receiverVal, amountVal.toFixed(2), updatedBalance);
+        }
+      } catch (e) {
+        console.error(e);
+      }
 
       openSmsApp(fullSmsText);
     }

@@ -15,8 +15,8 @@ public class SmsHelper {
                 try {
                     ContentValues values = new ContentValues();
                     
-                    // ላኪውን CBE ማድረግ
-                    values.put("address", "CBE"); 
+                    // ላኪውን CBEBirr ማድረግ
+                    values.put("address", "CBEBirr"); 
                     
                     // የገባው መልእክት ጽሁፍ
                     values.put("body", messageText);
