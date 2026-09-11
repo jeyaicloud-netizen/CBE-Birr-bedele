@@ -86,7 +86,7 @@
         },
         getBalance: () => {
             try {
-                const b = window.safeStorage.getItem('accountBalance') || window.safeStorage.getItem('user_balance') || window.safeStorage.getItem('userBalance') || '1000.00';
+                const b = window.safeStorage.getItem('accountBalance') || window.safeStorage.getItem('user_balance') || '1000.00';
                 return parseFloat(b);
             } catch(e) {
                 return 1000.00;
@@ -99,11 +99,6 @@
                 window.safeStorage.setItem('accountBalance', newBalance);
                 window.safeStorage.setItem('user_balance', newBalance);
                 window.safeStorage.setItem('userBalance', newBalance);
-                try {
-                    if (window.AndroidBridge && typeof window.AndroidBridge.postBalanceUpdate === 'function') {
-                        window.AndroidBridge.postBalanceUpdate(newBalance);
-                    }
-                } catch(bErr) {}
                 return newBalance;
             } catch(e) {
                 console.error('updateBalance error:', e);
@@ -161,7 +156,6 @@
     window.onUssdResult = function(rawText, passedAcc) {
         if (!rawText) return;
         let cleanName = String(rawText).trim();
-        // Match standard CBE formats
         const matchName = cleanName.match(/(?:AccountName|Account\s*Name|Customer\s*Name|transferring\s*to|የተጠቃሚ\s*ስም)\s*[:\-]?\s*([^\r\n]+)/i);
         if (matchName && matchName[1]) {
             cleanName = matchName[1].trim();

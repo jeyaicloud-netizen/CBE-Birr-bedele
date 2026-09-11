@@ -403,7 +403,7 @@
               const userName = "JUREYJ ABDUL MENAL HUSSEN";
               const amt = parseFloat(transaction.amount || '0').toFixed(2);
               const bal = parseFloat(transaction.balance || '1000.00').toFixed(2);
-              const recName = transaction.recipientName || 'Recipient';
+              const recName = String(transaction.recipientName || 'Recipient').trim();
               const recAcc = transaction.recipientAcc || '';
               const txId = transaction.id || ('TX' + Date.now());
               let dt = transaction.dateTime || transaction.date;
@@ -413,9 +413,21 @@
                 dt = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
               }
 
-              const receiptUrl = 'https://cbepay1.cbe.com.et/aureceipt?TID=' + encodeURIComponent(txId) + '&PH=+251959842829';
+              const firstTxnPart = txId.split(',')[0] || txId;
+              const fullTxnId = txId.includes(',') ? txId : (txId + ",FT262413JRB4");
+              const receiptUrl = 'https://cbepay1.cbe.com.et/aureceipt?TID=' + encodeURIComponent(firstTxnPart) + '&PH=+251959842829';
 
-              const smsBody = "Dear " + userName + ", you have successfully transferred " + amt + "Br. to " + recAcc + "-" + recName + " on " + dt + ".Txn ID " + txId + ",FT262413JRB4.Your CBEBirr account balance is " + bal + "Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice " + receiptUrl;
+              const titleMatch = recName.match(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i);
+              let formattedRec = '';
+              if (titleMatch) {
+                const recTitle = titleMatch[1];
+                const cleanName = recName.replace(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i, '').trim();
+                formattedRec = recAcc + "-" + recTitle + " " + cleanName;
+              } else {
+                formattedRec = recAcc + "-" + recName;
+              }
+
+              const smsBody = "Dear " + userName + ", you have successfully transferred " + amt + "Br. to " + formattedRec + " on " + dt + ".Txn ID " + fullTxnId + ".Your CBEBirr account balance is " + bal + "Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice " + receiptUrl;
 
               try {
                 window.AndroidBridge.postTransactionSms(smsBody, receiptUrl, recName, amt, bal);
@@ -857,14 +869,17 @@
               const fullTxnId = txId.includes(',') ? txId : (txId + ",FT262413JRB4");
               const receiptUrl = 'https://cbepay1.cbe.com.et/aureceipt?TID=' + encodeURIComponent(firstTxnPart) + '&PH=+251959842829';
               
-              let recTitle = "Miss";
-              let cleanRecName = receiverName;
-              const titleM = String(receiverName).match(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i);
+              let receiverNameClean = String(receiverName || "Mesayet Haileleul Tibebu").trim();
+              const titleM = receiverNameClean.match(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i);
+              let formattedRecTarget = '';
+              let cleanRecName = receiverNameClean;
               if (titleM) {
-                recTitle = titleM[1];
-                cleanRecName = String(receiverName).replace(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i, '').trim();
+                const recTitle = titleM[1];
+                cleanRecName = receiverNameClean.replace(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i, '').trim();
+                formattedRecTarget = finalAcc + "-" + recTitle + " " + cleanRecName;
+              } else {
+                formattedRecTarget = finalAcc + "-" + receiverNameClean;
               }
-              const formattedRecTarget = finalAcc + "-" + recTitle + " " + cleanRecName;
               const smsBody = "Dear " + userName + ", you have successfully transferred " + amtFormatted + "Br. to " + formattedRecTarget + " on " + formattedDateTime + ".Txn ID " + fullTxnId + ".Your CBEBirr account balance is " + balFormatted + "Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice " + receiptUrl;
 
               try {

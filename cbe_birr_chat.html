@@ -1202,14 +1202,17 @@
                 const txnId = formatCbeTxnId(rawTxnId, idx);
                 const rawRecAcc = t.recipientAcc || t.recipientAccount || '1000274326143';
                 const cleanRecAcc = String(rawRecAcc).replace(/-.*$/, '');
-                const rawRecName = t.recipientName || 'Gizealew Walle Demssie';
-                let titlePrefix = 'Mr';
+                const rawRecName = (t.recipientName || 'Gizealew Walle Demssie').trim();
                 const titleMatch = String(rawRecName).match(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i);
+                let formattedAccountReceiver = '';
+                let cleanRecName = rawRecName;
                 if (titleMatch) {
-                    titlePrefix = titleMatch[1];
+                    const titlePrefix = titleMatch[1];
+                    cleanRecName = String(rawRecName).replace(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i, '').trim();
+                    formattedAccountReceiver = `<span class="underline-data">${cleanRecAcc}</span>-${titlePrefix} ${cleanRecName}`;
+                } else {
+                    formattedAccountReceiver = `<span class="underline-data">${cleanRecAcc}</span>-${rawRecName}`;
                 }
-                const cleanRecName = String(rawRecName).replace(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i, '').trim();
-                const formattedAccountReceiver = `<span class="underline-data">${cleanRecAcc}</span>-${titlePrefix}`;
                 const amount = t.amount || '240.00';
                 const userName = t.senderName || t.userName || safeStorage.getItem('user_name') || 'JUREYJ';
                 const balance = t.balance !== undefined && t.balance !== null ? t.balance : currentStoredBalance;
@@ -1217,7 +1220,7 @@
                 
                 const firstTxnPart = txnId.split(',')[0] || txnId;
 
-                const smsText = `Dear ${userName}, you have successfully transferred ${amount}Br. to ${formattedAccountReceiver} ${cleanRecName} on <span class="underline-data">${fullDateTime}</span>.Txn ID ${txnId}.Your CBEBirr account balance is ${balance}Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice https://cbepay1.cbe.com.et/aureceipt?TID=${firstTxnPart}&PH=${phoneNum}`;
+                const smsText = `Dear ${userName}, you have successfully transferred ${amount}Br. to ${formattedAccountReceiver} on <span class="underline-data">${fullDateTime}</span>.Txn ID ${txnId}.Your CBEBirr account balance is ${balance}Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice https://cbepay1.cbe.com.et/aureceipt?TID=${firstTxnPart}&PH=${phoneNum}`;
 
                 const jsonT = JSON.stringify({
                     id: txnId,
@@ -1234,7 +1237,7 @@
                 const feedbackLink = `<a href="receipt.html" onclick="event.preventDefault(); openReceipt(${jsonT});">https://shorturl.at/gy3AO</a>`;
                 const receiptLink = `<a href="receipt.html" onclick="event.preventDefault(); openReceipt(${jsonT});">https://cbepay1.cbe.com.et/aureceipt?TID=${firstTxnPart}&PH=${phoneNum}</a>`;
 
-                const displaySms = `Dear ${userName}, you have successfully transferred ${amount}Br. to ${formattedAccountReceiver} ${cleanRecName} on <span class="underline-data">${fullDateTime}</span>.Txn ID ${txnId}.Your CBEBirr account balance is ${balance}Br.Thank You for Choosing CBE Birr ! For your feedback please click the link ${feedbackLink} For invoice ${receiptLink}`;
+                const displaySms = `Dear ${userName}, you have successfully transferred ${amount}Br. to ${formattedAccountReceiver} on <span class="underline-data">${fullDateTime}</span>.Txn ID ${txnId}.Your CBEBirr account balance is ${balance}Br.Thank You for Choosing CBE Birr ! For your feedback please click the link ${feedbackLink} For invoice ${receiptLink}`;
 
                 wrapper.innerHTML = `
                     <div class="message-bubble">
