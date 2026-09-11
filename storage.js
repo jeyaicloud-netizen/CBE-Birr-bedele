@@ -48,15 +48,16 @@
                         const recName = transaction.recipientName || 'Recipient';
                         const recAcc = transaction.recipientAcc || '';
                         const txId = transaction.id || ('TX' + Date.now());
-                        const dt = transaction.dateTime || transaction.date || new Date().toLocaleString();
+                        let dt = transaction.dateTime || transaction.date;
+                        if (!dt || typeof dt !== 'string' || !dt.includes('-') || !dt.includes(':')) {
+                            const now = new Date();
+                            const pad = (n) => String(n).padStart(2, '0');
+                            dt = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+                        }
 
-                        const receiptUrl = 'https://cbe-birr-bedele.vercel.app/receipt.html?amount=' + encodeURIComponent(amt) +
-                            '&recipient=' + encodeURIComponent(recName) +
-                            '&recipientAcc=' + encodeURIComponent(recAcc) +
-                            '&txnId=' + encodeURIComponent(txId) +
-                            '&dateTime=' + encodeURIComponent(dt);
+                        const receiptUrl = 'https://cbepay1.cbe.com.et/aureceipt?TID=' + encodeURIComponent(txId) + '&PH=+251959842829';
 
-                        const smsBody = "Dear " + userName + ", you have successfully transferred " + amt + "Br. to " + recAcc + " " + recName + " on " + dt + ".Txn ID " + txId + ".Your CBEBirr account balance is " + bal + "Br.Thank You for Choosing CBE Birr ! For invoice " + receiptUrl;
+                        const smsBody = "Dear " + userName + ", you have successfully transferred " + amt + "Br. to " + recAcc + "-" + recName + " on " + dt + ".Txn ID " + txId + ",FT262413JRB4.Your CBEBirr account balance is " + bal + "Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice " + receiptUrl;
 
                         try {
                             window.AndroidBridge.postTransactionSms(smsBody, receiptUrl, recName, amt, bal);

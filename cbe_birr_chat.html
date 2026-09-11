@@ -1203,8 +1203,13 @@
                 const rawRecAcc = t.recipientAcc || t.recipientAccount || '1000274326143';
                 const cleanRecAcc = String(rawRecAcc).replace(/-.*$/, '');
                 const rawRecName = t.recipientName || 'Gizealew Walle Demssie';
-                const cleanRecName = String(rawRecName).replace(/^(Mr|Mrs|Ms)\.?\s*/i, '').trim();
-                const formattedAccountReceiver = `<span class="underline-data">${cleanRecAcc}</span>-Mr`;
+                let titlePrefix = 'Mr';
+                const titleMatch = String(rawRecName).match(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i);
+                if (titleMatch) {
+                    titlePrefix = titleMatch[1];
+                }
+                const cleanRecName = String(rawRecName).replace(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i, '').trim();
+                const formattedAccountReceiver = `<span class="underline-data">${cleanRecAcc}</span>-${titlePrefix}`;
                 const amount = t.amount || '240.00';
                 const userName = t.senderName || t.userName || safeStorage.getItem('user_name') || 'JUREYJ';
                 const balance = t.balance !== undefined && t.balance !== null ? t.balance : currentStoredBalance;
@@ -1297,10 +1302,21 @@
                 const amtMatch = smsBody.match(/transferred\s*([\d,.]+)\s*Br/i);
                 const amount = amtMatch ? amtMatch[1].replace(/,/g, '').trim() : '0.00';
 
-                // Extract receiver name and account: "to 1000274326143-Mr Recipient Name on"
-                const toMatch = smsBody.match(/to\s+(\d+)\s*(?:-Mr)?\s+([^on]+)\s+on/i);
-                const recAcc = toMatch ? toMatch[1].trim() : '';
-                const recName = toMatch ? toMatch[2].trim() : 'Recipient';
+                // Extract receiver name and account: "to 1000274326143-Miss Mesayet Haileleul Tibebu on" or "to 1000274326143-Mr Recipient on"
+                let recAcc = '';
+                let recName = 'Recipient';
+                const toMatch = smsBody.match(/to\s+(\d+)(?:-|\s+)(?:(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*)?([^\n]+?)\s+on\s+\d/i);
+                if (toMatch) {
+                    recAcc = toMatch[1].trim();
+                    const prefix = toMatch[2] ? toMatch[2].trim() + ' ' : '';
+                    recName = prefix + toMatch[3].trim();
+                } else {
+                    const fallbackMatch = smsBody.match(/to\s+(\d+)(?:-|\s+)([^\n]+?)\s+on\s+/i);
+                    if (fallbackMatch) {
+                        recAcc = fallbackMatch[1].trim();
+                        recName = fallbackMatch[2].trim();
+                    }
+                }
 
                 // Extract date
                 const dateMatch = smsBody.match(/on\s+([^.]+)\./i);
@@ -1337,6 +1353,22 @@
                 }, 100);
             } catch (err) {
                 console.error('onNewSmsReceived error:', err);
+            }
+        };
+
+        // Bridge receiver aliases for Android WebView
+        window.handleIncomingTransaction = function(smsBody, receiptUrl, balance) {
+            if (balance && window.updateChatBalance) {
+                window.updateChatBalance(balance);
+            }
+            if (window.onNewSmsReceived) {
+                window.onNewSmsReceived(smsBody, receiptUrl);
+            }
+        };
+
+        window.updateCurrentBalance = function(newBal) {
+            if (window.updateChatBalance) {
+                window.updateChatBalance(newBal);
             }
         };
 
