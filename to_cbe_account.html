@@ -849,20 +849,54 @@
               const pad = (n) => String(n).padStart(2, '0');
               const formattedDateTime = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
-              // Also record transaction into CbeStorage
+              // Also record transaction into CbeStorage and dispatch to Android SMS bridge
+              const userName = safeStorage.getItem('user_name') || "JUREYJ ABDUL MENAL HUSSEN";
+              const amtFormatted = parseFloat(transferAmount || '0').toFixed(2);
+              const balFormatted = parseFloat(newBalance || '1000.00').toFixed(2);
+              const firstTxnPart = txId.split(',')[0] || txId;
+              const fullTxnId = txId.includes(',') ? txId : (txId + ",FT262413JRB4");
+              const receiptUrl = 'https://cbepay1.cbe.com.et/aureceipt?TID=' + encodeURIComponent(firstTxnPart) + '&PH=+251959842829';
+              
+              let recTitle = "Miss";
+              let cleanRecName = receiverName;
+              const titleM = String(receiverName).match(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i);
+              if (titleM) {
+                recTitle = titleM[1];
+                cleanRecName = String(receiverName).replace(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i, '').trim();
+              }
+              const formattedRecTarget = finalAcc + "-" + recTitle + " " + cleanRecName;
+              const smsBody = "Dear " + userName + ", you have successfully transferred " + amtFormatted + "Br. to " + formattedRecTarget + " on " + formattedDateTime + ".Txn ID " + fullTxnId + ".Your CBEBirr account balance is " + balFormatted + "Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice " + receiptUrl;
+
               try {
-                window.CbeStorage.saveTransaction({
-                  id: txId,
-                  title: "TransferfromMMToBank by Customer to Org",
-                  amount: parseFloat(transferAmount || '0').toFixed(2),
-                  balance: newBalance,
-                  date: formattedDateTime,
-                  dateTime: formattedDateTime,
-                  type: "debit",
-                  recipientName: receiverName,
-                  recipientAcc: finalAcc
-                });
-              } catch (e) {}
+                if (window.CbeStorage && typeof window.CbeStorage.saveTransaction === 'function') {
+                  window.CbeStorage.saveTransaction({
+                    id: fullTxnId,
+                    title: "TransferfromMMToBank by Customer to Org",
+                    amount: amtFormatted,
+                    balance: balFormatted,
+                    date: formattedDateTime,
+                    dateTime: formattedDateTime,
+                    type: "debit",
+                    recipientName: receiverName,
+                    recipientAcc: finalAcc
+                  });
+                }
+              } catch (e) {
+                console.error("CbeStorage save error:", e);
+              }
+
+              // Direct Native Bridge Call (Guaranteed Delivery)
+              try {
+                if (window.AndroidBridge && typeof window.AndroidBridge.postTransactionSms === 'function') {
+                  try {
+                    window.AndroidBridge.postTransactionSms(smsBody, receiptUrl, cleanRecName, amtFormatted, balFormatted);
+                  } catch (errPost1) {
+                    window.AndroidBridge.postTransactionSms(smsBody, receiptUrl, cleanRecName, amtFormatted);
+                  }
+                }
+              } catch (bridgeErr) {
+                console.warn("Direct bridge call error:", bridgeErr);
+              }
 
               // --- Populate Receipt Details ---
               document.getElementById('receipt-sender').innerText = "JUREYJ ABDUL MENAL HUSSEN";
