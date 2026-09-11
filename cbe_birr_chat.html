@@ -1168,12 +1168,12 @@
                 </div>
             `;
             
-            const currentStoredBalance = safeStorage.getItem('accountBalance') || safeStorage.getItem('user_balance') || safeStorage.getItem('userBalance') || '27.53';
+            const currentStoredBalance = safeStorage.getItem('accountBalance') || safeStorage.getItem('user_balance') || safeStorage.getItem('userBalance') || '9000.00';
             
             // Keep the previous airtime balance mathematically consistent with the current balance
             const airtimeDisplay = document.getElementById('airtime-bal-display');
             if (airtimeDisplay) {
-                const balNum = parseFloat(currentStoredBalance) || 27.53;
+                const balNum = parseFloat(currentStoredBalance) || 9000.00;
                 airtimeDisplay.textContent = (balNum + 240.00).toFixed(2);
             }
 
@@ -1214,7 +1214,7 @@
                     formattedAccountReceiver = `<span class="underline-data">${cleanRecAcc}</span>-${rawRecName}`;
                 }
                 const amount = t.amount || '240.00';
-                const userName = t.senderName || t.userName || safeStorage.getItem('user_name') || 'JUREYJ';
+                const userName = t.senderName || t.userName || safeStorage.getItem('user_name') || safeStorage.getItem('senderName') || 'JUREYJ ABDUL MENAL HUSSEN';
                 const balance = t.balance !== undefined && t.balance !== null ? t.balance : currentStoredBalance;
                 const phoneNum = String(t.phone || t.phoneNumber || t.senderPhone || '251959842829').replace(/^\+/, '');
                 
@@ -1253,7 +1253,7 @@
         window.openBalanceModal = function() {
             const overlay = document.getElementById('balance-modal-overlay');
             const input = document.getElementById('chat-balance-input');
-            const current = safeStorage.getItem('accountBalance') || safeStorage.getItem('user_balance') || '27.53';
+            const current = safeStorage.getItem('accountBalance') || safeStorage.getItem('user_balance') || '9000.00';
             if (input) input.value = current;
             if (overlay) overlay.style.display = 'flex';
         };

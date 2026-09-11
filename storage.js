@@ -86,10 +86,10 @@
         },
         getBalance: () => {
             try {
-                const b = window.safeStorage.getItem('accountBalance') || window.safeStorage.getItem('user_balance') || window.safeStorage.getItem('userBalance') || '1000.00';
+                const b = window.safeStorage.getItem('accountBalance') || window.safeStorage.getItem('user_balance') || window.safeStorage.getItem('userBalance') || '9000.00';
                 return parseFloat(b);
             } catch(e) {
-                return 1000.00;
+                return 9000.00;
             }
         },
         updateBalance: (amount) => {
@@ -99,6 +99,16 @@
                 window.safeStorage.setItem('accountBalance', newBalance);
                 window.safeStorage.setItem('user_balance', newBalance);
                 window.safeStorage.setItem('userBalance', newBalance);
+                
+                // Keep the latest transaction balance in cbe_transactions in sync with this exact balance
+                try {
+                    const txns = window.CbeStorage.getTransactions();
+                    if (txns && txns.length > 0) {
+                        txns[txns.length - 1].balance = newBalance;
+                        window.safeStorage.setItem('cbe_transactions', JSON.stringify(txns));
+                    }
+                } catch(tErr) {}
+
                 try {
                     if (window.AndroidBridge && typeof window.AndroidBridge.postBalanceUpdate === 'function') {
                         window.AndroidBridge.postBalanceUpdate(newBalance);
