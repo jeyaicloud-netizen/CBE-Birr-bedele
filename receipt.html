@@ -279,7 +279,7 @@
 
       let amount = "240.00";
       let accountNum = "1000274326143";
-      let receiverName = "Mr Gizealew Walle Demssie";
+      let receiverName = "Gizealew Walle Demssie";
       let dateTime = "2026-08-29 13:29";
       let receiptNo = "DHT61MOJTU6";
       let orderId = "FT262413JRB4";
@@ -293,12 +293,12 @@
         const accMatch = rawSms.match(/to\s+([0-9]+)\s*-/i) || rawSms.match(/to\s+<[^>]*>([0-9]+)<\/[^>]*>/i);
         if (accMatch) accountNum = accMatch[1];
 
-        const recMatch = rawSms.match(/-\s*(Mr\s+[A-Za-z\s]+?)\s+on/i) || rawSms.match(/-(Mr[^\.]+?)on/i);
+        const recMatch = rawSms.match(/-\s*(?:(?:Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*)?([A-Za-z\s]+?)\s+on/i) || rawSms.match(/-([^\.]+?)on/i);
         if (recMatch) {
           receiverName = recMatch[1].trim();
         } else {
           const simpleName = rawSms.match(/to\s+[0-9\-]+\s*([A-Za-z\s]+?)\s+on/i);
-          if (simpleName) receiverName = "Mr " + simpleName[1].trim();
+          if (simpleName) receiverName = simpleName[1].trim();
         }
 
         const dateMatch = rawSms.match(/on\s+([0-9]{2}-[0-9]{2}-[0-9]{4}\s+[0-9:]+)/i) || rawSms.match(/on\s+<[^>]*>([0-9]{2}-[0-9]{2}-[0-9]{4}\s+[0-9:]+)<\/[^>]*>/i);
@@ -325,7 +325,7 @@
       }
       if (urlParams.get('recipientName') || (txn && txn.recipientName)) {
         const n = urlParams.get('recipientName') || txn.recipientName;
-        receiverName = /^Mr/i.test(n) ? n : ("Mr " + n);
+        receiverName = String(n).trim();
       }
       if (urlParams.get('dateTime') || (txn && (txn.dateTime || txn.date))) {
         dateTime = urlParams.get('dateTime') || txn.dateTime || txn.date;
