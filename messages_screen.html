@@ -1,61 +1,614 @@
 <!DOCTYPE html>
-<html lang="am">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Messages Screen</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Messages</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { margin: 0; padding: 0; background: #111; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: sans-serif; overflow: hidden; }
-    .mobile-frame {
-      position: relative;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #ffffff;
+      font-family: 'Google Sans', 'Roboto', sans-serif;
+      color: #1f1f1f;
+    }
+    .app-container {
       width: 100vw;
       max-width: 480px;
       height: 100vh;
+      height: 100dvh;
       margin: 0 auto;
-      overflow: hidden;
-      background: white;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      position: relative;
     }
-    #messages-image {
-      width: 100%;
-      height: 100%;
-      object-fit: fill;
-      display: block;
-      user-select: none;
-      -webkit-user-select: none;
+
+    /* Top Google Search Bar */
+    .top-search-area {
+      padding: 12px 16px 8px 16px;
+      background: #ffffff;
     }
-    .back-btn {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      z-index: 100;
-      font-size: 15px;
-      background: rgba(0,0,0,0.6);
-      color: white;
-      padding: 6px 12px;
-      border-radius: 20px;
-      cursor: pointer;
+    .search-bar {
+      background: #f0f4f9;
+      border-radius: 28px;
+      height: 52px;
       display: flex;
       align-items: center;
-      gap: 4px;
-    }
-    #cbe-birr-overlay {
+      padding: 0 16px;
+      gap: 12px;
       cursor: pointer;
-      position: absolute;
-      top: 8.7%;
-      left: 2.5%;
-      width: 95%;
-      height: 6.8%;
-      z-index: 60;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .search-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #444746;
+    }
+    .search-input {
+      flex: 1;
+      border: none;
       background: transparent;
+      outline: none;
+      font-size: 16px;
+      font-family: 'Google Sans', sans-serif;
+      color: #1f1f1f;
+    }
+    .search-input::placeholder {
+      color: #747775;
+      font-weight: 400;
+    }
+    .profile-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #0b57d0;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* Message list container */
+    .conversations-list {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 90px;
+    }
+
+    /* Conversation Item */
+    .conv-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      gap: 16px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      position: relative;
+    }
+    .conv-item:active {
+      background-color: #f2f4f7;
+    }
+    .avatar-wrapper {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 20px;
+      font-weight: 600;
+      position: relative;
+      overflow: hidden;
+    }
+    .avatar-cbe {
+      background: #731b78;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(115, 27, 120, 0.25);
+    }
+    .avatar-cbe img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .avatar-telecom {
+      background: #0072bc;
+      color: #ffffff;
+    }
+    .avatar-generic {
+      background: #e1e3e1;
+      color: #444746;
+    }
+
+    .conv-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .conv-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+    .conv-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f1f1f;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .conv-title.unread {
+      font-weight: 700;
+    }
+    .conv-time {
+      font-size: 12px;
+      color: #747775;
+      margin-left: 8px;
+      white-space: nowrap;
+    }
+    .conv-time.unread {
+      color: #0b57d0;
+      font-weight: 600;
+    }
+
+    .conv-preview-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .conv-preview {
+      font-size: 14px;
+      color: #444746;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
+    }
+    .conv-preview.unread {
+      color: #1f1f1f;
+      font-weight: 600;
+    }
+    .unread-badge {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #0b57d0;
+      flex-shrink: 0;
+    }
+
+    /* Floating "Start Chat" Button */
+    .fab-start-chat {
+      position: absolute;
+      bottom: 24px;
+      right: 20px;
+      background: #c2e7ff;
+      color: #001d35;
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      cursor: pointer;
+      transition: transform 0.15s, background-color 0.15s;
+      z-index: 50;
+    }
+    .fab-start-chat:active {
+      transform: scale(0.96);
+      background: #b3ddf8;
+    }
+
+    /* Fullscreen Chat Modal for general contacts */
+    .generic-chat-view {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+    }
+    .chat-nav-bar {
+      height: 60px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid #e0e2e0;
+      background: #ffffff;
+    }
+    .chat-back-btn {
+      cursor: pointer;
+      padding: 8px;
+      margin-left: -8px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .chat-target-info {
+      flex: 1;
+    }
+    .chat-target-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f1f1f;
+    }
+    .chat-target-sub {
+      font-size: 12px;
+      color: #747775;
+    }
+    .chat-messages-container {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #f8f9fa;
+    }
+    .chat-bubble {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+    .chat-bubble.incoming {
+      align-self: flex-start;
+      background: #e9eef6;
+      color: #1f1f1f;
+      border-bottom-left-radius: 4px;
+    }
+    .chat-bubble.outgoing {
+      align-self: flex-end;
+      background: #0b57d0;
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-input-bar {
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #ffffff;
+      border-top: 1px solid #e0e2e0;
+    }
+    .chat-input {
+      flex: 1;
+      background: #f0f4f9;
+      border: none;
+      outline: none;
+      padding: 12px 16px;
+      border-radius: 24px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+    .chat-send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #0b57d0;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: none;
+      flex-shrink: 0;
+    }
+
+    /* New Chat Dialog */
+    .new-chat-dialog {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      z-index: 120;
+      display: none;
+      flex-direction: column;
     }
   </style>
 </head>
 <body>
-  <div class="mobile-frame">
-    <div class="back-btn" onclick="window.location.href='all_accounts.html'">← Back</div>
-    <img id="messages-image" src="screen_messages.png" alt="Messages Screen">
-    <div id="cbe-birr-overlay" onclick="window.location.href='cbe_birr_chat.html'" ontouchend="window.location.href='cbe_birr_chat.html'"></div>
+
+  <div class="app-container">
+    <!-- Top Search Header -->
+    <div class="top-search-area">
+      <div class="search-bar">
+        <div class="search-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search messages">
+        <div class="profile-avatar">C</div>
+      </div>
+    </div>
+
+    <!-- Messages Conversations List -->
+    <div class="conversations-list" id="conversationsList">
+      
+      <!-- CBE Birr (Pinned / Priority Item) -->
+      <div class="conv-item" id="cbeBirrItem" onclick="openCbeBirrChat()">
+        <div class="avatar-wrapper avatar-cbe">
+          <span style="font-weight: 700; font-size: 15px;">CBE</span>
+        </div>
+        <div class="conv-content">
+          <div class="conv-header">
+            <div class="conv-title unread">CBEBirr</div>
+            <div class="conv-time unread" id="cbeTime">Just now</div>
+          </div>
+          <div class="conv-preview-row">
+            <div class="conv-preview unread" id="cbePreview">You have received ETB ...</div>
+            <div class="unread-badge" id="cbeBadge"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CBE SMS (847) -->
+      <div class="conv-item" onclick="openGenericChat('847', 'CBE System')">
+        <div class="avatar-wrapper avatar-cbe" style="background:#5a1060;">
+          <span style="font-size: 14px;">847</span>
+        </div>
+        <div class="conv-content">
+          <div class="conv-header">
+            <div class="conv-title">847 (Commercial Bank)</div>
+            <div class="conv-time">10:45 AM</div>
+          </div>
+          <div class="conv-preview-row">
+            <div class="conv-preview">Dear Customer, your account transaction was successful.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ethio telecom -->
+      <div class="conv-item" onclick="openGenericChat('EthioTelecom', 'ethio telecom')">
+        <div class="avatar-wrapper avatar-telecom">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+          </svg>
+        </div>
+        <div class="conv-content">
+          <div class="conv-header">
+            <div class="conv-title">EthioTelecom</div>
+            <div class="conv-time">Yesterday</div>
+          </div>
+          <div class="conv-preview-row">
+            <div class="conv-preview">Your mobile package has been renewed successfully.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 810 Notification -->
+      <div class="conv-item" onclick="openGenericChat('810', 'Telebirr 810')">
+        <div class="avatar-wrapper avatar-generic">
+          <span>810</span>
+        </div>
+        <div class="conv-content">
+          <div class="conv-header">
+            <div class="conv-title">810</div>
+            <div class="conv-time">Thursday</div>
+          </div>
+          <div class="conv-preview-row">
+            <div class="conv-preview">Your balance info and services confirmation.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Start Chat Floating Action Button (Google Messages Style) -->
+    <div class="fab-start-chat" onclick="openNewChatDialog()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
+      <span>Start chat</span>
+    </div>
+
+    <!-- Generic Chat View (For ordinary SMS contacts) -->
+    <div class="generic-chat-view" id="genericChatView">
+      <div class="chat-nav-bar">
+        <div class="chat-back-btn" onclick="closeGenericChat()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </div>
+        <div class="chat-target-info">
+          <div class="chat-target-name" id="chatTargetName">Contact</div>
+          <div class="chat-target-sub">SMS • Mobile</div>
+        </div>
+      </div>
+      <div class="chat-messages-container" id="chatMessagesBox">
+        <!-- Messages will be populated here -->
+      </div>
+      <div class="chat-input-bar">
+        <input type="text" id="chatTextInput" class="chat-input" placeholder="Text message (SMS)">
+        <button class="chat-send-btn" onclick="sendGenericMessage()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- New Chat Prompt Dialog -->
+    <div class="new-chat-dialog" id="newChatDialog">
+      <div class="chat-nav-bar">
+        <div class="chat-back-btn" onclick="closeNewChatDialog()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </div>
+        <div class="chat-target-info">
+          <div class="chat-target-name">New conversation</div>
+        </div>
+      </div>
+      <div style="padding: 16px;">
+        <input type="tel" id="newRecipientInput" class="chat-input" style="width: 100%; border: 1px solid #c4c7c5; background: white;" placeholder="Type name or phone number">
+        <button onclick="startConversationWithRecipient()" style="margin-top: 16px; width: 100%; height: 48px; border-radius: 24px; background: #0b57d0; color: white; border: none; font-size: 15px; font-weight: 600; cursor: pointer;">
+          Start conversation
+        </button>
+      </div>
+    </div>
+
   </div>
+
+  <script>
+    // 1. CBE Birr Chat መክፈቻ
+    function openCbeBirrChat() {
+      // unread badge-ን ያጠፋዋል
+      const badge = document.getElementById('cbeBadge');
+      if (badge) badge.style.display = 'none';
+      const preview = document.getElementById('cbePreview');
+      if (preview) preview.classList.remove('unread');
+      const time = document.getElementById('cbeTime');
+      if (time) time.classList.remove('unread');
+
+      window.location.href = 'cbe_birr_chat.html';
+    }
+
+    // 2. Android Bridge ሲስተም (ከ Java የሚመጡ መልእክቶችን ለመቀበል)
+    window.handleIncomingTransaction = function(body, receiptUrl, balance) {
+      if (!body) return;
+
+      // ዝርዝሩ ላይ ያለውን የ CBE Birr ጽሁፍ ወዲያውኑ በሪል ታይም ማዘመን
+      const previewEl = document.getElementById('cbePreview');
+      const timeEl = document.getElementById('cbeTime');
+      const badgeEl = document.getElementById('cbeBadge');
+
+      if (previewEl) {
+        previewEl.innerText = body;
+        previewEl.classList.add('unread');
+      }
+      if (timeEl) {
+        const now = new Date();
+        timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        timeEl.classList.add('unread');
+      }
+      if (badgeEl) {
+        badgeEl.style.display = 'block';
+      }
+
+      // ሎካል ስቶሬጅ ላይም ማስቀመጥ
+      try {
+        localStorage.setItem('cbe_latest_preview', body);
+        localStorage.setItem('cbe_latest_time', new Date().toISOString());
+      } catch(e) {}
+    };
+
+    // ገጹ ሲከፈት ያለፈውን የቅርብ ጊዜ CBE መልእክት መጫን
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        const savedPreview = localStorage.getItem('cbe_latest_preview');
+        if (savedPreview) {
+          document.getElementById('cbePreview').innerText = savedPreview;
+        }
+      } catch(e) {}
+    });
+
+    // 3. Generic Contacts Chat Handling (ለሌሎች ቁጥሮች)
+    let currentContactId = '';
+    const contactMessages = {
+      '847': [
+        { text: 'Dear Customer, your CBE account transaction alert.', type: 'incoming', time: '10:45 AM' }
+      ],
+      'EthioTelecom': [
+        { text: 'Your package purchase was successful.', type: 'incoming', time: 'Yesterday' }
+      ],
+      '810': [
+        { text: 'Telebirr notification: Welcome!', type: 'incoming', time: 'Thursday' }
+      ]
+    };
+
+    function openGenericChat(id, name) {
+      currentContactId = id;
+      document.getElementById('chatTargetName').innerText = name || id;
+      renderMessagesForContact(id);
+      document.getElementById('genericChatView').style.display = 'flex';
+    }
+
+    function closeGenericChat() {
+      document.getElementById('genericChatView').style.display = 'none';
+    }
+
+    function renderMessagesForContact(id) {
+      const box = document.getElementById('chatMessagesBox');
+      box.innerHTML = '';
+      const msgs = contactMessages[id] || [];
+      msgs.forEach(m => {
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble ' + m.type;
+        bubble.innerText = m.text;
+        box.appendChild(bubble);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function sendGenericMessage() {
+      const input = document.getElementById('chatTextInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      if (!contactMessages[currentContactId]) {
+        contactMessages[currentContactId] = [];
+      }
+      contactMessages[currentContactId].push({
+        text: text,
+        type: 'outgoing',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+
+      renderMessagesForContact(currentContactId);
+      input.value = '';
+    }
+
+    // 4. Start New Chat Dialog
+    function openNewChatDialog() {
+      document.getElementById('newChatDialog').style.display = 'flex';
+    }
+
+    function closeNewChatDialog() {
+      document.getElementById('newChatDialog').style.display = 'none';
+    }
+
+    function startConversationWithRecipient() {
+      const recipient = document.getElementById('newRecipientInput').value.trim();
+      if (!recipient) return;
+      closeNewChatDialog();
+      openGenericChat(recipient, recipient);
+    }
+  </script>
 </body>
 </html>
