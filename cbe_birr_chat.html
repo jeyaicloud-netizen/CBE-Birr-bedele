@@ -1273,7 +1273,7 @@
 
         window.updateChatBalance = function(val) {
             if (val === undefined || val === null || val === '') return;
-            const formatted = parseFloat(val).toFixed(2);
+            const formatted = parseFloat(String(val).replace(/,/g, '')).toFixed(2);
             safeStorage.setItem('accountBalance', formatted);
             safeStorage.setItem('user_balance', formatted);
             safeStorage.setItem('userBalance', formatted);
@@ -1284,28 +1284,65 @@
                 txns[txns.length - 1].balance = formatted;
                 safeStorage.setItem('cbe_transactions', JSON.stringify(txns));
             }
+
+            // Sync with messages_screen preview
+            try {
+                let preview = safeStorage.getItem('cbe_latest_preview');
+                if (preview && preview.includes('ቀሪ ሂሳብዎ')) {
+                    preview = preview.replace(/ቀሪ ሂሳብዎ\s*[\d,.]+\s*ብር/, `ቀሪ ሂሳብዎ ${formatted} ብር`);
+                    safeStorage.setItem('cbe_latest_preview', preview);
+                }
+            } catch(pErr) {}
+
+            try {
+                if (window.AndroidBridge && typeof window.AndroidBridge.postBalanceUpdate === 'function') {
+                    window.AndroidBridge.postBalanceUpdate(formatted);
+                }
+            } catch(bErr) {}
+
             loadTransactions();
         };
 
         // --- Handle Incoming Real-Time SMS from CBE App ---
-        window.onNewSmsReceived = function(smsBody, receiptUrl) {
+        window.onNewSmsReceived = function(smsBody, receiptUrl, directBalance) {
             if (!smsBody) return;
             try {
-                // Extract balance from SMS: "Your CBEBirr account balance is 4950.00Br"
-                const balMatch = smsBody.match(/balance is\s*([\d,.]+)\s*Br/i);
+                // 1. Extract amount: e.g. "successfully transferred 50.00Br." or "transferred 100 Br"
+                const amtMatch = smsBody.match(/transferred\s*([\d,.]+)\s*(?:Br|ETB)?/i);
+                const amount = amtMatch ? amtMatch[1].replace(/,/g, '').trim() : '0.00';
+                const numAmount = parseFloat(amount) || 0;
+
+                // 2. Extract or determine Balance
                 let extractedBal = null;
-                if (balMatch && balMatch[1]) {
-                    extractedBal = balMatch[1].replace(/,/g, '').trim();
-                    safeStorage.setItem('accountBalance', extractedBal);
-                    safeStorage.setItem('user_balance', extractedBal);
-                    safeStorage.setItem('userBalance', extractedBal);
+                if (directBalance && String(directBalance).trim() !== '') {
+                    extractedBal = String(directBalance).replace(/,/g, '').trim();
+                } else {
+                    // Try flexible regex for balance in SMS text
+                    const balMatch = smsBody.match(/(?:balance\s*(?:is|:)?\s*(?:ETB|Br)?\s*([\d,.]+)|([\d,.]+)\s*(?:Br|ETB)\s*account\s*balance)/i);
+                    if (balMatch) {
+                        extractedBal = (balMatch[1] || balMatch[2] || '').replace(/,/g, '').trim();
+                    }
                 }
 
-                // Extract amount: "successfully transferred 50.00Br."
-                const amtMatch = smsBody.match(/transferred\s*([\d,.]+)\s*Br/i);
-                const amount = amtMatch ? amtMatch[1].replace(/,/g, '').trim() : '0.00';
+                // If still not found, mathematically deduct amount from current balance!
+                let currentBalStr = safeStorage.getItem('accountBalance') || safeStorage.getItem('user_balance') || '9000.00';
+                let currentBalNum = parseFloat(String(currentBalStr).replace(/,/g, '')) || 0;
 
-                // Extract receiver name and account: "to 1000274326143-Miss Mesayet Haileleul Tibebu on" or "to 1000274326143-Mr Recipient on"
+                let finalBalNum;
+                if (extractedBal && !isNaN(parseFloat(extractedBal))) {
+                    finalBalNum = parseFloat(extractedBal);
+                } else {
+                    finalBalNum = Math.max(0, currentBalNum - numAmount);
+                }
+
+                const finalBalFormatted = finalBalNum.toFixed(2);
+
+                // Save updated balance to all storage keys immediately
+                safeStorage.setItem('accountBalance', finalBalFormatted);
+                safeStorage.setItem('user_balance', finalBalFormatted);
+                safeStorage.setItem('userBalance', finalBalFormatted);
+
+                // 3. Extract receiver name and account
                 let recAcc = '';
                 let recName = 'Recipient';
                 const toMatch = smsBody.match(/to\s+(\d+)(?:-|\s+)(?:(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*)?([^\n]+?)\s+on\s+/i);
@@ -1315,17 +1352,17 @@
                     recName = prefix + toMatch[3].trim();
                 }
 
-                // Extract date
+                // 4. Extract date
                 const dateMatch = smsBody.match(/on\s+([^.]+)\./i);
                 const dateTime = dateMatch ? dateMatch[1].trim() : new Date().toLocaleString();
 
-                // Extract txnId
+                // 5. Extract txnId
                 const txnMatch = smsBody.match(/Txn ID\s*([^.]+)\./i);
                 const txnId = txnMatch ? txnMatch[1].trim() : ('TX' + Date.now());
 
-                // Extract sender name
+                // 6. Extract sender name
                 const userMatch = smsBody.match(/Dear\s+([^,]+),/i);
-                const userName = userMatch ? userMatch[1].trim() : (safeStorage.getItem('user_name') || 'JUREYJ');
+                const userName = userMatch ? userMatch[1].trim() : (safeStorage.getItem('user_name') || 'JUREYJ ABDUL MENAL HUSSEN');
 
                 let txns = (window.CbeStorage && typeof window.CbeStorage.getTransactions === 'function') ? window.CbeStorage.getTransactions() : JSON.parse(safeStorage.getItem('cbe_transactions') || '[]');
                 const exists = txns.some(t => (t.id === txnId || t.txnId === txnId));
@@ -1336,10 +1373,15 @@
                         recipientName: recName,
                         recipientAcc: recAcc,
                         dateTime: dateTime,
-                        balance: extractedBal || safeStorage.getItem('accountBalance') || '1000.00',
+                        balance: finalBalFormatted,
                         phone: '251959842829',
                         userName: userName
                     });
+                    safeStorage.setItem('cbe_transactions', JSON.stringify(txns));
+                } else {
+                    // Update the balance on existing matching txn
+                    const found = txns.find(t => (t.id === txnId || t.txnId === txnId));
+                    if (found) found.balance = finalBalFormatted;
                     safeStorage.setItem('cbe_transactions', JSON.stringify(txns));
                 }
 
@@ -1355,11 +1397,10 @@
 
         // Bridge receiver aliases for Android WebView
         window.handleIncomingTransaction = function(smsBody, receiptUrl, balance) {
-            if (balance && window.updateChatBalance) {
-                window.updateChatBalance(balance);
-            }
             if (window.onNewSmsReceived) {
-                window.onNewSmsReceived(smsBody, receiptUrl);
+                window.onNewSmsReceived(smsBody, receiptUrl, balance);
+            } else if (balance && window.updateChatBalance) {
+                window.updateChatBalance(balance);
             }
         };
 

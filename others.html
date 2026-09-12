@@ -192,6 +192,13 @@
       if (overlay) overlay.classList.add('active');
       if (target) target.classList.add('active');
       if (id === 'list-modal') renderAccounts();
+      if (id === 'admin-balance-modal') {
+        const input = document.getElementById('admin-balance-input');
+        if (input) {
+          const curr = window.CbeStorage ? window.CbeStorage.getBalance() : (safeStorage.getItem('accountBalance') || '9000.00');
+          input.value = curr;
+        }
+      }
     }
     
     function closeModals() {
@@ -203,14 +210,19 @@
     function saveBalance() {
         const balance = document.getElementById('admin-balance-input')?.value;
         if (balance !== undefined && balance !== '') {
-          safeStorage.setItem('accountBalance', balance);
-          safeStorage.setItem('user_balance', balance);
-          safeStorage.setItem('userBalance', balance);
-          try {
-            if (window.AndroidBridge && typeof window.AndroidBridge.postBalanceUpdate === 'function') {
-              window.AndroidBridge.postBalanceUpdate(balance);
-            }
-          } catch(e) {}
+          if (window.CbeStorage && typeof window.CbeStorage.setExactBalance === 'function') {
+            window.CbeStorage.setExactBalance(balance);
+          } else {
+            const formatted = parseFloat(String(balance).replace(/,/g, '')).toFixed(2);
+            safeStorage.setItem('accountBalance', formatted);
+            safeStorage.setItem('user_balance', formatted);
+            safeStorage.setItem('userBalance', formatted);
+            try {
+              if (window.AndroidBridge && typeof window.AndroidBridge.postBalanceUpdate === 'function') {
+                window.AndroidBridge.postBalanceUpdate(formatted);
+              }
+            } catch(e) {}
+          }
         }
         closeModals();
     }

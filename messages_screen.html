@@ -706,18 +706,34 @@
       try {
         localStorage.setItem('cbe_latest_preview', smsBody);
         if (balance) {
-          localStorage.setItem('accountBalance', balance);
-          localStorage.setItem('user_balance', balance);
+          const cleanB = String(balance).replace(/,/g, '').trim();
+          localStorage.setItem('accountBalance', cleanB);
+          localStorage.setItem('user_balance', cleanB);
+          localStorage.setItem('userBalance', cleanB);
         }
       } catch(e) {}
     };
 
-    // Load saved balance & preview on startup
+    // Load saved balance & dynamic preview on startup
     window.addEventListener('DOMContentLoaded', () => {
       try {
+        const currentBal = localStorage.getItem('accountBalance') || localStorage.getItem('user_balance') || localStorage.getItem('userBalance') || '4,950.00';
+        const formattedBal = parseFloat(String(currentBal).replace(/,/g, '')).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const snippetEl = document.getElementById('cbe-snippet');
         const savedPreview = localStorage.getItem('cbe_latest_preview');
+        
         if (savedPreview) {
-          document.getElementById('cbe-snippet').innerText = savedPreview;
+          let updated = savedPreview;
+          if (updated.includes('ቀሪ ሂሳብዎ')) {
+            updated = updated.replace(/ቀሪ ሂሳብዎ\s*[\d,.]+\s*ብር/, `ቀሪ ሂሳብዎ ${formattedBal} ብር`);
+          }
+          if (snippetEl) snippetEl.innerText = updated;
+        } else {
+          // If default preview, update the balance portion
+          if (snippetEl) {
+            snippetEl.innerHTML = `ውድ Abdu<br>ከቴሌ-ብር አካውንትዎ 251965848508 ለ Commercial Bank of Ethiopia (CBE) አካውንት 1000274326143 ወደሆነው 50.00 ብር አስተላልፈዋል። ቀሪ ሂሳብዎ ${formattedBal} ብር ነው። የትራንዛክሽን ቁጥር FT262568L9Z9። እናመሰግናለን!`;
+          }
         }
       } catch(e) {}
     });

@@ -87,20 +87,48 @@
         getBalance: () => {
             try {
                 const b = window.safeStorage.getItem('accountBalance') || window.safeStorage.getItem('user_balance') || window.safeStorage.getItem('userBalance') || '9000.00';
-                return parseFloat(b);
+                return parseFloat(String(b).replace(/,/g, '')) || 9000.00;
             } catch(e) {
                 return 9000.00;
+            }
+        },
+        setExactBalance: (newVal) => {
+            try {
+                if (newVal === undefined || newVal === null || newVal === '') return '9000.00';
+                const formatted = parseFloat(String(newVal).replace(/,/g, '')).toFixed(2);
+                window.safeStorage.setItem('accountBalance', formatted);
+                window.safeStorage.setItem('user_balance', formatted);
+                window.safeStorage.setItem('userBalance', formatted);
+
+                // Update the balance in the latest transaction in cbe_transactions
+                try {
+                    const txns = window.CbeStorage.getTransactions();
+                    if (txns && txns.length > 0) {
+                        txns[txns.length - 1].balance = formatted;
+                        window.safeStorage.setItem('cbe_transactions', JSON.stringify(txns));
+                    }
+                } catch(tErr) {}
+
+                try {
+                    if (window.AndroidBridge && typeof window.AndroidBridge.postBalanceUpdate === 'function') {
+                        window.AndroidBridge.postBalanceUpdate(formatted);
+                    }
+                } catch(bErr) {}
+                return formatted;
+            } catch(e) {
+                return '9000.00';
             }
         },
         updateBalance: (amount) => {
             try {
                 const balance = window.CbeStorage.getBalance();
-                const newBalance = Math.max(0, balance - parseFloat(amount || '0')).toFixed(2);
+                const amt = parseFloat(String(amount || '0').replace(/,/g, '')) || 0;
+                const newBalance = Math.max(0, balance - amt).toFixed(2);
                 window.safeStorage.setItem('accountBalance', newBalance);
                 window.safeStorage.setItem('user_balance', newBalance);
                 window.safeStorage.setItem('userBalance', newBalance);
                 
-                // Keep the latest transaction balance in cbe_transactions in sync with this exact balance
+                // Keep the latest transaction balance in cbe_transactions in sync
                 try {
                     const txns = window.CbeStorage.getTransactions();
                     if (txns && txns.length > 0) {

@@ -838,7 +838,7 @@
                 if (window.CbeStorage && typeof window.CbeStorage.updateBalance === 'function') {
                   newBalance = window.CbeStorage.updateBalance(amount);
                 } else {
-                  let balance = parseFloat(safeStorage.getItem('user_balance') || safeStorage.getItem('accountBalance') || '1000.00');
+                  let balance = parseFloat(String(safeStorage.getItem('user_balance') || safeStorage.getItem('accountBalance') || '9000.00').replace(/,/g, '')) || 9000.00;
                   balance = Math.max(0, balance - amount);
                   newBalance = balance.toFixed(2);
                   safeStorage.setItem('user_balance', newBalance);
