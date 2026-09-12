@@ -228,6 +228,7 @@
         pointer-events: auto;
     }
   </style>
+  <script src="storage.js"></script>
 </head>
 <body>
   <div class="page active">
@@ -402,7 +403,7 @@
             if (window.AndroidBridge && window.AndroidBridge.postTransactionSms) {
               const userName = "JUREYJ ABDUL MENAL HUSSEN";
               const amt = parseFloat(transaction.amount || '0').toFixed(2);
-              const bal = parseFloat(transaction.balance || '1000.00').toFixed(2);
+              const bal = parseFloat(transaction.balance || '9000.00').toFixed(2);
               const recName = String(transaction.recipientName || 'Recipient').trim();
               const recAcc = transaction.recipientAcc || '';
               const txId = transaction.id || ('TX' + Date.now());
@@ -442,9 +443,9 @@
       },
       getBalance: () => {
         try {
-          const b = window.safeStorage.getItem('accountBalance') || window.safeStorage.getItem('user_balance') || window.safeStorage.getItem('userBalance') || '1000.00';
+          const b = window.safeStorage.getItem('accountBalance') || window.safeStorage.getItem('user_balance') || window.safeStorage.getItem('userBalance') || '9000.00';
           return parseFloat(b);
-        } catch(e) { return 1000.00; }
+        } catch(e) { return 9000.00; }
       },
       updateBalance: (amount) => {
         try {
