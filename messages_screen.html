@@ -296,6 +296,243 @@
       transform: scale(0.96);
       background: #c2d7f8;
     }
+
+    /* Google Messages Authentic Conversation View */
+    .chat-conv-view {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+      z-index: 150;
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+    }
+    .conv-view-header {
+      height: 56px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #ffffff;
+      border-bottom: 1px solid #f0f2f5;
+      flex-shrink: 0;
+    }
+    .conv-view-back {
+      cursor: pointer;
+      padding: 8px;
+      margin-left: -4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1f1f1f;
+      border-radius: 50%;
+    }
+    .conv-view-back:active {
+      background: #f1f3f4;
+    }
+    .conv-view-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #f25547;
+      color: white;
+      font-size: 16px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .conv-view-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .conv-view-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f1f1f;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .conv-view-sub {
+      font-size: 12px;
+      color: #747775;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .conv-view-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #1f1f1f;
+    }
+    .conv-view-btn {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      border-radius: 50%;
+      color: inherit;
+      text-decoration: none;
+    }
+    .conv-view-btn:active {
+      background: #f1f3f4;
+    }
+    .conv-messages-container {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #ffffff;
+    }
+    .conv-date-chip {
+      align-self: center;
+      font-size: 11.5px;
+      color: #747775;
+      margin: 6px 0;
+      background: #f0f2f5;
+      padding: 3px 12px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .conv-security-notice {
+      align-self: center;
+      font-size: 11.5px;
+      color: #575b5f;
+      text-align: center;
+      line-height: 1.4;
+      background: #f8f9fa;
+      padding: 6px 14px;
+      border-radius: 14px;
+      margin-bottom: 8px;
+    }
+    .msg-bubble-row {
+      display: flex;
+      flex-direction: column;
+      max-width: 80%;
+      animation: msgPop 0.15s ease-out;
+    }
+    @keyframes msgPop {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .msg-bubble-row.incoming {
+      align-self: flex-start;
+    }
+    .msg-bubble-row.outgoing {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+    .msg-bubble {
+      padding: 10px 14px;
+      font-size: 14.5px;
+      line-height: 1.42;
+      word-break: break-word;
+    }
+    .msg-bubble-row.incoming .msg-bubble {
+      background: #f2f2f2;
+      color: #1f1f1f;
+      border-radius: 18px 18px 18px 4px;
+    }
+    .msg-bubble-row.outgoing .msg-bubble {
+      background: #0b57d0;
+      color: #ffffff;
+      border-radius: 18px 18px 4px 18px;
+    }
+    .msg-meta {
+      font-size: 10.5px;
+      color: #747775;
+      margin-top: 3px;
+      padding: 0 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .msg-bubble-row.outgoing .msg-meta {
+      justify-content: flex-end;
+    }
+    .conv-input-bar {
+      padding: 8px 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #ffffff;
+      border-top: 1px solid #f0f2f5;
+      flex-shrink: 0;
+    }
+    .conv-input-capsule {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: #f0f4f9;
+      border-radius: 24px;
+      padding: 4px 12px;
+      gap: 8px;
+    }
+    .conv-input-capsule input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 14.5px;
+      color: #1f1f1f;
+      padding: 8px 0;
+      font-family: inherit;
+    }
+    .conv-input-capsule input::placeholder {
+      color: #747775;
+    }
+    .conv-icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      color: #444746;
+    }
+    .conv-send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #0b57d0;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.1s;
+    }
+    .conv-send-btn:active {
+      transform: scale(0.92);
+      background: #0842a0;
+    }
+    /* Toast */
+    .msg-toast {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #323232;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13.5px;
+      z-index: 999;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -331,7 +568,7 @@
         <div class="selection-count" id="selectionCountText">1</div>
       </div>
       <div class="selection-right">
-        <div class="action-icon" onclick="clearSelection()">
+        <div class="action-icon" onclick="archiveSelectedConversations()" title="Archive">
           <!-- Archive Icon -->
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="21 8 21 21 3 21 3 8"></polyline>
@@ -339,7 +576,7 @@
             <line x1="10" y1="12" x2="14" y2="12"></line>
           </svg>
         </div>
-        <div class="action-icon" onclick="clearSelection()">
+        <div class="action-icon" onclick="deleteSelectedConversations()" title="Delete">
           <!-- Delete Trash Icon -->
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
@@ -536,26 +773,164 @@
     </div>
 
     <!-- Start Chat Pill Button -->
-    <div class="fab-start-chat-pill" onclick="openSystemSms('')">
+    <div class="fab-start-chat-pill" onclick="startNewChatPrompt()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
       </svg>
       <span>Start chat</span>
     </div>
 
+    <!-- 4. Authentic Google Messages Conversation View (Full Screen Overlay) -->
+    <div class="chat-conv-view" id="conversationView">
+      <header class="conv-view-header">
+        <div class="conv-view-back" onclick="closeConversationView()" title="Back">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </div>
+        <div class="conv-view-avatar" id="convViewAvatar">
+          <span id="convViewAvatarText">09</span>
+        </div>
+        <div class="conv-view-info">
+          <div class="conv-view-name" id="convViewName">091 813 9630</div>
+          <div class="conv-view-sub" id="convViewSub"><span style="font-size:11px;">🔒</span> Texting with SMS/MMS</div>
+        </div>
+        <div class="conv-view-actions">
+          <a class="conv-view-btn" id="convCallBtn" href="tel:" title="Call">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-2.2 2.2a15.05 15.05 0 01-6.59-6.59l2.2-2.21c.28-.26.36-.65.25-1.01A11.36 11.36 0 018.57 3.9a1 1 0 00-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.52c0-.55-.45-1-.99-1z"/></svg>
+          </a>
+          <div class="conv-view-btn" onclick="deleteCurrentConversation()" title="Delete conversation">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </div>
+        </div>
+      </header>
+
+      <!-- Message Bubbles Container -->
+      <div class="conv-messages-container" id="convMessagesContainer">
+        <!-- Bubbles loaded dynamically -->
+      </div>
+
+      <!-- Bottom Compose Input Bar -->
+      <footer class="conv-input-bar">
+        <div class="conv-input-capsule">
+          <button class="conv-icon-btn" type="button" title="Emoji">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#444746" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+          </button>
+          <input type="text" id="convTextInput" placeholder="Text message" onkeydown="handleInputKeyDown(event)" autocomplete="off" />
+          <button class="conv-icon-btn" type="button" title="Attach">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#444746" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          </button>
+        </div>
+        <button class="conv-send-btn" id="convSendBtn" onclick="sendMessage()" title="Send SMS">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </footer>
+    </div>
+
+    <!-- Toast Notification Element -->
+    <div id="msgToast" class="msg-toast" style="display:none;"></div>
+
   </div>
 
   <script>
-    // --- Selection State (Long Press) ---
+    // --- Preset Data for Built-In Contacts ---
+    const CONTACT_PRESETS = {
+      '0918139630': {
+        id: '2',
+        name: '091 813 9630',
+        color: '#f25547',
+        avatarText: '09',
+        initialMessages: [
+          { text: 'ብርን አቀበልሀለው', time: '4:58 pm', incoming: true }
+        ]
+      },
+      '994': {
+        id: '3',
+        name: '994',
+        color: '#f9ab00',
+        avatarText: '994',
+        initialMessages: [
+          { text: 'ውድ ደንበኛችን\nGift Daily Internet Package 1.2GB from telebirr ተጠቃሚ ይሁኑ!', time: '3:24 pm', incoming: true }
+        ]
+      },
+      '251994': {
+        id: '4',
+        name: '251994',
+        color: '#f9ab00',
+        avatarText: '25',
+        initialMessages: [
+          { text: 'ውድ ደንበኛችን፤ Weekly Holiday 1020MB and 23 Min ጥቅል በ 100 ብር ተዘጋጅቷል::', time: '3:16 pm', incoming: true }
+        ]
+      },
+      '605': {
+        id: '5',
+        name: '605',
+        color: '#34a853',
+        avatarText: '605',
+        initialMessages: [
+          { text: 'አዲሱን አመት እድማስ ዲጂታል ሎተሪን በመቁረጥ እና እድልዎን በመሞከር ይጀምሩ:: 605 ላይ ማንኛውንም ጽሑፍ ይላኩ::', time: '3:15 pm', incoming: true }
+        ]
+      },
+      '830': {
+        id: '6',
+        name: '830',
+        color: '#e91e63',
+        avatarText: '830',
+        initialMessages: [
+          { text: 'በቴሌ-ብር ስላደረጉት የገንዘብ ዝውውር እናመሰግናለን። ወደ *830*1# በመደወል በቴሌታይ ጨዋታዎች እለታዊ ሽልማቶችን ያሸንፉ::', time: '2:11 pm', incoming: true }
+        ]
+      },
+      '131': {
+        id: '7',
+        name: '131',
+        color: '#00bcd4',
+        avatarText: '131',
+        initialMessages: [
+          { text: 'Dear customer, You have just won 3 Gold coin(s) that give you access to BETTER PRIZES!', time: '6:53 am', incoming: true }
+        ]
+      },
+      '0903193332': {
+        id: '8',
+        name: '090 319 3332',
+        color: '#7c4dff',
+        avatarText: '09',
+        initialMessages: [
+          { text: 'ሄሎ ስልኩን ላክልኝ?', time: 'Thu 11:20 am', incoming: true },
+          { text: '0942924306', time: 'Fri 2:40 pm', incoming: false }
+        ]
+      },
+      'የኔ ዉድ': {
+        id: '9',
+        name: 'የኔ ዉድ❤️❤️❤️',
+        color: '#9333ea',
+        avatarText: 'የ',
+        initialMessages: [
+          { text: 'ፍቅር እንዴት ነህ ደህና ነህ?', time: 'Thu 8:15 pm', incoming: false },
+          { text: 'እሺ ፍቅር የሚላህ በኪሊባ ውስጥ ብቻ ነው ሲጀመር ወደኔ', time: 'Fri 10:14 am', incoming: true }
+        ]
+      },
+      '0930327519': {
+        id: '10',
+        name: '093 032 7519',
+        color: '#ff7043',
+        avatarText: '09',
+        initialMessages: [
+          { text: '1000558266884', time: 'Fri 3:45 pm', incoming: true }
+        ]
+      }
+    };
+
+    // --- Active State ---
+    let currentContact = null;
     const selectedItems = new Set();
     let isSelectionMode = false;
     let pressTimer = null;
 
     // Attach Long Press & Click listeners to all rows
-    document.querySelectorAll('.conv-row').forEach(row => {
+    function attachRowListeners(row) {
       const id = row.getAttribute('data-id');
 
-      // Touch / Mouse Long Press
       function startLongPress(e) {
         pressTimer = setTimeout(() => {
           triggerLongPress(id);
@@ -574,7 +949,9 @@
       row.addEventListener('mousedown', startLongPress);
       row.addEventListener('mouseup', cancelLongPress);
       row.addEventListener('mouseleave', cancelLongPress);
-    });
+    }
+
+    document.querySelectorAll('.conv-row').forEach(row => attachRowListeners(row));
 
     function triggerLongPress(id) {
       if (navigator.vibrate) {
@@ -645,7 +1022,79 @@
       updateSelectionBar();
     }
 
-    // Handle Item Click
+    // --- DELETION LOGIC (Persists in localStorage) ---
+    function deleteSelectedConversations() {
+      if (selectedItems.size === 0) return;
+
+      let deleted = [];
+      try {
+        deleted = JSON.parse(localStorage.getItem('cbe_deleted_conversations') || '[]');
+      } catch(e) { deleted = []; }
+
+      const count = selectedItems.size;
+      selectedItems.forEach(id => {
+        const row = document.querySelector(`.conv-row[data-id="${id}"]`);
+        if (row) {
+          row.style.transition = 'all 0.25s ease';
+          row.style.opacity = '0';
+          row.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+            if (row.parentNode) row.remove();
+          }, 250);
+        }
+        if (!deleted.includes(String(id))) {
+          deleted.push(String(id));
+        }
+      });
+
+      try {
+        localStorage.setItem('cbe_deleted_conversations', JSON.stringify(deleted));
+      } catch(e) {}
+
+      selectedItems.clear();
+      updateSelectionBar();
+      showToast(count > 1 ? `${count} conversations deleted` : 'Conversation deleted');
+    }
+
+    function archiveSelectedConversations() {
+      deleteSelectedConversations();
+    }
+
+    function deleteCurrentConversation() {
+      if (!currentContact) return;
+      const id = currentContact.id;
+
+      let deleted = [];
+      try {
+        deleted = JSON.parse(localStorage.getItem('cbe_deleted_conversations') || '[]');
+      } catch(e) { deleted = []; }
+
+      if (!deleted.includes(String(id))) {
+        deleted.push(String(id));
+      }
+      try {
+        localStorage.setItem('cbe_deleted_conversations', JSON.stringify(deleted));
+        localStorage.removeItem('chat_history_' + currentContact.key);
+      } catch(e) {}
+
+      const row = document.querySelector(`.conv-row[data-id="${id}"]`);
+      if (row) row.remove();
+
+      closeConversationView();
+      showToast('Conversation deleted');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('msgToast');
+      if (!toast) return;
+      toast.innerText = msg;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 2500);
+    }
+
+    // --- Handle Item Click ---
     function handleItemClick(target) {
       if (isSelectionMode) {
         const id = target === 'cbe' ? 'cbe' : (target.startsWith('09') || target === '994' || target === '251994' || target === '605' || target === '830' || target === '131' || target === 'የኔ ዉድ') ? getRowIdByTarget(target) : target;
@@ -654,11 +1103,9 @@
       }
 
       if (target === 'cbe') {
-        // Go directly to CBEBirr Chat
         window.location.href = 'cbe_birr_chat.html';
       } else {
-        // Open system SMS app directly for ordinary contacts
-        openSystemSms(target);
+        openConversation(target);
       }
     }
 
@@ -672,15 +1119,232 @@
       if (t === '0903193332') return '8';
       if (t === 'የኔ ዉድ') return '9';
       if (t === '0930327519') return '10';
-      return 'cbe';
+      return t;
     }
 
-    function openSystemSms(phone) {
-      const cleanPhone = phone.replace(/\s+/g, '');
-      if (window.AndroidBridge && window.AndroidBridge.openSmsApp) {
-        window.AndroidBridge.openSmsApp(cleanPhone);
+    // --- CONVERSATION VIEW (Google Messages Chat) ---
+    function openConversation(contactKey, prefillBody) {
+      if (!contactKey) return;
+      const cleanKey = String(contactKey).trim();
+
+      // Retrieve preset or build on-the-fly for dialed number
+      let data = CONTACT_PRESETS[cleanKey];
+      if (!data) {
+        // Look up by clean phone without spaces
+        for (let k in CONTACT_PRESETS) {
+          if (k.replace(/\s+/g, '') === cleanKey.replace(/\s+/g, '')) {
+            data = CONTACT_PRESETS[k];
+            break;
+          }
+        }
+      }
+
+      if (!data) {
+        // This is a dialed number or new contact!
+        const cleanDigits = cleanKey.replace(/\s+/g, '');
+        data = {
+          id: 'custom_' + cleanDigits,
+          key: cleanKey,
+          name: cleanKey,
+          color: '#1a73e8',
+          avatarText: cleanKey.length >= 2 ? cleanKey.substring(0, 2) : cleanKey,
+          initialMessages: []
+        };
       } else {
-        window.location.href = cleanPhone ? `sms:${cleanPhone}` : 'sms:';
+        data.key = cleanKey;
+      }
+
+      currentContact = data;
+
+      // Update Header Info
+      const view = document.getElementById('conversationView');
+      const nameEl = document.getElementById('convViewName');
+      const avatarEl = document.getElementById('convViewAvatar');
+      const avatarTextEl = document.getElementById('convViewAvatarText');
+      const callBtn = document.getElementById('convCallBtn');
+      const container = document.getElementById('convMessagesContainer');
+      const textInput = document.getElementById('convTextInput');
+
+      if (nameEl) nameEl.innerText = data.name;
+      if (avatarEl) avatarEl.style.backgroundColor = data.color || '#1a73e8';
+      if (avatarTextEl) avatarTextEl.innerText = data.avatarText || '09';
+      if (callBtn) callBtn.href = 'tel:' + data.name.replace(/\s+/g, '');
+
+      // Load Stored Messages or Presets
+      container.innerHTML = `
+        <div class="conv-date-chip">Today</div>
+        <div class="conv-security-notice">
+          🔒 Texting with <b>${data.name}</b> (SMS/MMS)<br>
+          <span style="font-size:10.5px; color:#747775;">End-to-end encrypted message thread</span>
+        </div>
+      `;
+
+      let storedMsgs = [];
+      try {
+        storedMsgs = JSON.parse(localStorage.getItem('chat_history_' + data.key) || 'null');
+      } catch(e) {}
+
+      const messagesToRender = storedMsgs !== null ? storedMsgs : (data.initialMessages || []);
+
+      messagesToRender.forEach(m => {
+        renderBubble(m.text, m.time || 'Just now', m.incoming);
+      });
+
+      // Prefill text if provided (e.g. from dialer or query params)
+      if (textInput) {
+        textInput.value = prefillBody || '';
+        setTimeout(() => textInput.focus(), 150);
+      }
+
+      // Show view
+      if (view) {
+        view.style.display = 'flex';
+      }
+
+      // Scroll to bottom
+      setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+      }, 50);
+    }
+
+    function renderBubble(text, timeStr, isIncoming) {
+      const container = document.getElementById('convMessagesContainer');
+      if (!container) return;
+
+      const row = document.createElement('div');
+      row.className = `msg-bubble-row ${isIncoming ? 'incoming' : 'outgoing'}`;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+      bubble.innerText = text;
+
+      const meta = document.createElement('div');
+      meta.className = 'msg-meta';
+      meta.innerHTML = isIncoming 
+        ? `${timeStr}` 
+        : `${timeStr} • <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Sent`;
+
+      row.appendChild(bubble);
+      row.appendChild(meta);
+      container.appendChild(row);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('convTextInput');
+      if (!input || !currentContact) return;
+      const text = input.value.trim();
+      if (!text) return;
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase();
+
+      // Render locally in thread
+      renderBubble(text, timeStr, false);
+      input.value = '';
+
+      // Save to localStorage for this contact
+      let storedMsgs = [];
+      try {
+        storedMsgs = JSON.parse(localStorage.getItem('chat_history_' + currentContact.key) || 'null');
+        if (!storedMsgs) {
+          storedMsgs = [...(currentContact.initialMessages || [])];
+        }
+      } catch(e) {
+        storedMsgs = [];
+      }
+      storedMsgs.push({ text: text, time: timeStr, incoming: false });
+      try {
+        localStorage.setItem('chat_history_' + currentContact.key, JSON.stringify(storedMsgs));
+      } catch(e) {}
+
+      // Update Conversation Row in main messages list
+      updateConversationRow(currentContact, text, timeStr);
+
+      // Scroll thread down
+      const container = document.getElementById('convMessagesContainer');
+      if (container) container.scrollTop = container.scrollHeight;
+    }
+
+    function handleInputKeyDown(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+
+    function closeConversationView() {
+      const view = document.getElementById('conversationView');
+      if (view) view.style.display = 'none';
+      currentContact = null;
+    }
+
+    // Update or Insert Conversation Row into Main List
+    function updateConversationRow(contact, latestSnippet, timeStr) {
+      let row = document.querySelector(`.conv-row[data-id="${contact.id}"]`);
+      const list = document.getElementById('messagesListContainer');
+
+      if (!row && list) {
+        // Dynamically create a new row for this dialed/new contact
+        row = document.createElement('div');
+        row.className = 'conv-row';
+        row.setAttribute('data-id', contact.id);
+        row.id = 'item-' + contact.id;
+        row.onclick = () => handleItemClick(contact.name);
+
+        row.innerHTML = `
+          <div class="avatar-circle" id="avatar-${contact.id}" style="background-color:${contact.color || '#1a73e8'};">
+            <span>${contact.avatarText || '09'}</span>
+          </div>
+          <div class="conv-body">
+            <div class="conv-top-line">
+              <span class="conv-sender">${contact.name}</span>
+              <span class="conv-time-text">${timeStr}</span>
+            </div>
+            <div class="conv-bottom-line">
+              <p class="conv-snippet">You: ${latestSnippet}</p>
+            </div>
+          </div>
+        `;
+        attachRowListeners(row);
+        // Insert at the top of list (right after CBE if present)
+        const cbeItem = document.getElementById('item-cbe');
+        if (cbeItem && cbeItem.nextSibling) {
+          list.insertBefore(row, cbeItem.nextSibling);
+        } else {
+          list.prepend(row);
+        }
+
+        // Save custom contact
+        try {
+          let customContacts = JSON.parse(localStorage.getItem('cbe_custom_contacts') || '[]');
+          if (!customContacts.some(c => c.name === contact.name)) {
+            customContacts.push(contact);
+            localStorage.setItem('cbe_custom_contacts', JSON.stringify(customContacts));
+          }
+        } catch(e) {}
+      } else if (row) {
+        // Update existing row
+        const snippetEl = row.querySelector('.conv-snippet');
+        const timeEl = row.querySelector('.conv-time-text');
+        const badge = row.querySelector('.unread-counter-badge');
+        if (snippetEl) snippetEl.innerText = `You: ${latestSnippet}`;
+        if (timeEl) timeEl.innerText = timeStr;
+        if (badge) badge.remove();
+
+        // Move to top
+        const cbeItem = document.getElementById('item-cbe');
+        if (cbeItem && cbeItem.nextSibling && row !== cbeItem.nextSibling) {
+          list.insertBefore(row, cbeItem.nextSibling);
+        }
+      }
+    }
+
+    // Start New Chat (Floating Action Button)
+    function startNewChatPrompt() {
+      const number = prompt('አዲስ መልእክት ለመላክ የስልክ ቁጥር ያስገቡ፦\nEnter phone number to message:');
+      if (number && number.trim()) {
+        openConversation(number.trim());
       }
     }
 
@@ -714,8 +1378,32 @@
       } catch(e) {}
     };
 
-    // Load saved balance & dynamic preview on startup
+    // --- INITIALIZATION ON STARTUP ---
     window.addEventListener('DOMContentLoaded', () => {
+      // 1. Remove deleted conversations from DOM
+      try {
+        const deleted = JSON.parse(localStorage.getItem('cbe_deleted_conversations') || '[]');
+        deleted.forEach(id => {
+          const row = document.querySelector(`.conv-row[data-id="${id}"]`);
+          if (row) row.remove();
+        });
+      } catch(e) {}
+
+      // 2. Load custom contacts added previously
+      try {
+        const customContacts = JSON.parse(localStorage.getItem('cbe_custom_contacts') || '[]');
+        customContacts.forEach(contact => {
+          // Check if not deleted
+          let deleted = JSON.parse(localStorage.getItem('cbe_deleted_conversations') || '[]');
+          if (deleted.includes(String(contact.id))) return;
+
+          let history = JSON.parse(localStorage.getItem('chat_history_' + contact.key) || '[]');
+          const lastMsg = history.length > 0 ? history[history.length - 1] : null;
+          updateConversationRow(contact, lastMsg ? lastMsg.text : '', lastMsg ? lastMsg.time : '');
+        });
+      } catch(e) {}
+
+      // 3. Load saved balance & dynamic preview for CBEBirr
       try {
         const currentBal = localStorage.getItem('accountBalance') || localStorage.getItem('user_balance') || localStorage.getItem('userBalance') || '4,950.00';
         const formattedBal = parseFloat(String(currentBal).replace(/,/g, '')).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -730,10 +1418,19 @@
           }
           if (snippetEl) snippetEl.innerText = updated;
         } else {
-          // If default preview, update the balance portion
           if (snippetEl) {
             snippetEl.innerHTML = `ውድ Abdu<br>ከቴሌ-ብር አካውንትዎ 251965848508 ለ Commercial Bank of Ethiopia (CBE) አካውንት 1000274326143 ወደሆነው 50.00 ብር አስተላልፈዋል። ቀሪ ሂሳብዎ ${formattedBal} ብር ነው። የትራንዛክሽን ቁጥር FT262568L9Z9። እናመሰግናለን!`;
           }
+        }
+      } catch(e) {}
+
+      // 4. CHECK URL PARAMETERS (From Phone dialer "Send message", ACTION_SENDTO, or deep link)
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const recipient = urlParams.get('recipient') || urlParams.get('address') || urlParams.get('phone') || urlParams.get('to');
+        const body = urlParams.get('body') || urlParams.get('text') || urlParams.get('msg') || urlParams.get('sms_body');
+        if (recipient && recipient.trim()) {
+          openConversation(recipient.trim(), body);
         }
       } catch(e) {}
     });

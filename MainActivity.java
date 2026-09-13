@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
+import android.provider.Telephony;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -66,6 +67,29 @@ public class MainActivity extends Activity {
                 }
             } catch (Exception e) {}
         }
+
+        // SMS ፈቃዶች መጠየቅ እና Default SMS App ጥያቄ ማቅረብ
+        try {
+            if (Build.VERSION.SDK_INT >= 23) {
+                String[] smsPerms = new String[]{
+                    "android.permission.READ_SMS",
+                    "android.permission.WRITE_SMS",
+                    "android.permission.RECEIVE_SMS",
+                    "android.permission.SEND_SMS"
+                };
+                boolean needPerm = false;
+                for (String p : smsPerms) {
+                    if (checkSelfPermission(p) != PackageManager.PERMISSION_GRANTED) {
+                        needPerm = true;
+                        break;
+                    }
+                }
+                if (needPerm) {
+                    requestPermissions(smsPerms, 102);
+                }
+            }
+            checkAndRequestDefaultSmsApp();
+        } catch (Exception e) {}
 
         // 1. መከላከያ፡ Screenኑ ጥቁር እንዳይሆን (Never flash or stay black)
         getWindow().setBackgroundDrawable(new ColorDrawable(Color.WHITE));
@@ -118,6 +142,12 @@ public class MainActivity extends Activity {
                     makePhoneCall(url);
                     return true;
                 }
+                if (url.startsWith("sms:") || url.startsWith("smsto:")) {
+                    String number = url.replace("sms:", "").replace("smsto:", "");
+                    if (number.contains("?")) number = number.substring(0, number.indexOf("?"));
+                    view.loadUrl("file:///android_asset/messages_screen.html?recipient=" + Uri.encode(number));
+                    return true;
+                }
                 view.loadUrl(url);
                 return true;
             }
@@ -133,6 +163,12 @@ public class MainActivity extends Activity {
                     makePhoneCall(url);
                     return true;
                 }
+                if (url.startsWith("sms:") || url.startsWith("smsto:")) {
+                    String number = url.replace("sms:", "").replace("smsto:", "");
+                    if (number.contains("?")) number = number.substring(0, number.indexOf("?"));
+                    view.loadUrl("file:///android_asset/messages_screen.html?recipient=" + Uri.encode(number));
+                    return true;
+                }
                 view.loadUrl(url);
                 return true;
             }
@@ -140,6 +176,9 @@ public class MainActivity extends Activity {
 
         // የባንኩ ድረ-ገጽ (ወይም በሎካል ፋይል መቀየር ይችላሉ)
         webView.loadUrl("https://cbe-birr-bedele.vercel.app/");
+
+        // ከስልክ መደወያ ወይም ከሌላ አፕ የተላከ የ SMS intent ካለ መክፈት
+        handleIncomingIntent(getIntent());
 
         // 2. ስሙን መቀበያ BroadcastReceiver (ከ ussd.java ጋር ቀጥታ የተገናኘ)
         nameReceiver = new BroadcastReceiver() {
@@ -445,6 +484,51 @@ public class MainActivity extends Activity {
                 } catch (Exception ex2) {}
             } catch (Exception e) {}
         }
+
+        @JavascriptInterface
+        public void requestDefaultSmsApp() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    checkAndRequestDefaultSmsApp();
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void openSmsApp(final String phone) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (webView != null) {
+                        webView.loadUrl("file:///android_asset/messages_screen.html?recipient=" + Uri.encode(phone));
+                    }
+                }
+            });
+        }
+    }
+
+    public void checkAndRequestDefaultSmsApp() {
+        try {
+            if (Build.VERSION.SDK_INT >= 29) { // Android 10+
+                android.app.role.RoleManager roleManager = getSystemService(android.app.role.RoleManager.class);
+                if (roleManager != null && roleManager.isRoleAvailable(android.app.role.RoleManager.ROLE_SMS)) {
+                    if (!roleManager.isRoleHeld(android.app.role.RoleManager.ROLE_SMS)) {
+                        Intent roleRequestIntent = roleManager.createRequestRoleIntent(android.app.role.RoleManager.ROLE_SMS);
+                        startActivityForResult(roleRequestIntent, 1002);
+                    }
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                String defaultSmsApp = Telephony.Sms.getDefaultSmsPackage(this);
+                if (defaultSmsApp == null || !defaultSmsApp.equals(getPackageName())) {
+                    Intent intent = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+                    intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, getPackageName());
+                    startActivityForResult(intent, 1002);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void showNotification(String body, String receiptUrl, String recipient, String amount, String balance) {
@@ -529,6 +613,55 @@ public class MainActivity extends Activity {
         // ከመደወያ ሲመለስ ስክሪኑ ጥቁር እንዳይሆን
         if (rootContainer != null) {
             rootContainer.setBackgroundColor(Color.WHITE);
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIncomingIntent(intent);
+    }
+
+    private void handleIncomingIntent(Intent intent) {
+        if (intent == null) return;
+        try {
+            String action = intent.getAction();
+            Uri data = intent.getData();
+            String recipient = "";
+
+            if (data != null) {
+                String scheme = data.getScheme();
+                if ("sms".equalsIgnoreCase(scheme) || "smsto".equalsIgnoreCase(scheme) || "mms".equalsIgnoreCase(scheme) || "mmsto".equalsIgnoreCase(scheme)) {
+                    recipient = data.getSchemeSpecificPart();
+                    if (recipient != null && recipient.contains("?")) {
+                        recipient = recipient.substring(0, recipient.indexOf("?"));
+                    }
+                }
+            }
+            if (recipient == null || recipient.isEmpty()) {
+                recipient = intent.getStringExtra("address");
+            }
+            if (recipient == null || recipient.isEmpty()) {
+                recipient = intent.getStringExtra(Intent.EXTRA_PHONE_NUMBER);
+            }
+            String body = intent.getStringExtra("sms_body");
+            if (body == null) body = intent.getStringExtra(Intent.EXTRA_TEXT);
+
+            if (recipient != null && !recipient.isEmpty()) {
+                final String targetUrl = "file:///android_asset/messages_screen.html?recipient=" + Uri.encode(recipient)
+                        + (body != null && !body.isEmpty() ? "&body=" + Uri.encode(body) : "");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (webView != null) {
+                            webView.loadUrl(targetUrl);
+                        }
+                    }
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
