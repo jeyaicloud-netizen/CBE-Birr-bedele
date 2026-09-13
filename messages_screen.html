@@ -437,6 +437,7 @@
       font-size: 14.5px;
       line-height: 1.42;
       word-break: break-word;
+      white-space: pre-wrap;
     }
     .msg-bubble-row.incoming .msg-bubble {
       background: #f2f2f2;
@@ -1184,16 +1185,37 @@
         storedMsgs = JSON.parse(localStorage.getItem('chat_history_' + data.key) || 'null');
       } catch(e) {}
 
-      const messagesToRender = storedMsgs !== null ? storedMsgs : (data.initialMessages || []);
+      let messagesToRender = storedMsgs !== null ? [...storedMsgs] : [...(data.initialMessages || [])];
+
+      // If this is an incoming SMS (e.g. from Ethio Telecom notification, 994, 127, etc.)
+      if (incomingMsg && incomingMsg.trim()) {
+        const cleanIncoming = incomingMsg.trim();
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase();
+
+        // Check if the last message in thread is already this incoming message (avoid duplicate on re-open)
+        const lastMsg = messagesToRender.length > 0 ? messagesToRender[messagesToRender.length - 1] : null;
+        if (!lastMsg || lastMsg.text !== cleanIncoming) {
+          messagesToRender.push({ text: cleanIncoming, time: timeStr, incoming: true });
+          try {
+            localStorage.setItem('chat_history_' + data.key, JSON.stringify(messagesToRender));
+          } catch(e) {}
+          updateConversationRow(data, cleanIncoming, timeStr, true);
+        }
+        // Do NOT put incoming message in the text input box!
+        prefillBody = '';
+      }
 
       messagesToRender.forEach(m => {
         renderBubble(m.text, m.time || 'Just now', m.incoming);
       });
 
-      // Prefill text if provided (e.g. from dialer or query params)
+      // Prefill text only if user explicitly typed a draft from dialer
       if (textInput) {
         textInput.value = prefillBody || '';
-        setTimeout(() => textInput.focus(), 150);
+        if (!prefillBody) {
+          setTimeout(() => textInput.focus(), 150);
+        }
       }
 
       // Show view
@@ -1280,9 +1302,10 @@
     }
 
     // Update or Insert Conversation Row into Main List
-    function updateConversationRow(contact, latestSnippet, timeStr) {
+    function updateConversationRow(contact, latestSnippet, timeStr, isIncoming = false) {
       let row = document.querySelector(`.conv-row[data-id="${contact.id}"]`);
       const list = document.getElementById('messagesListContainer');
+      const prefix = isIncoming ? '' : 'You: ';
 
       if (!row && list) {
         // Dynamically create a new row for this dialed/new contact
@@ -1302,7 +1325,7 @@
               <span class="conv-time-text">${timeStr}</span>
             </div>
             <div class="conv-bottom-line">
-              <p class="conv-snippet">You: ${latestSnippet}</p>
+              <p class="conv-snippet">${prefix}${latestSnippet}</p>
             </div>
           </div>
         `;
@@ -1328,7 +1351,7 @@
         const snippetEl = row.querySelector('.conv-snippet');
         const timeEl = row.querySelector('.conv-time-text');
         const badge = row.querySelector('.unread-counter-badge');
-        if (snippetEl) snippetEl.innerText = `You: ${latestSnippet}`;
+        if (snippetEl) snippetEl.innerText = `${prefix}${latestSnippet}`;
         if (timeEl) timeEl.innerText = timeStr;
         if (badge) badge.remove();
 
@@ -1424,16 +1447,28 @@
         }
       } catch(e) {}
 
-      // 4. CHECK URL PARAMETERS (From Phone dialer "Send message", ACTION_SENDTO, or deep link)
+      // 4. CHECK URL PARAMETERS (From Phone dialer "Send message", notification, or deep link)
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const recipient = urlParams.get('recipient') || urlParams.get('address') || urlParams.get('phone') || urlParams.get('to');
-        const body = urlParams.get('body') || urlParams.get('text') || urlParams.get('msg') || urlParams.get('sms_body');
+        const incomingMsg = urlParams.get('incoming_msg') || urlParams.get('incoming') || urlParams.get('sms');
+        const draftBody = urlParams.get('body') || urlParams.get('text') || urlParams.get('msg') || urlParams.get('sms_body');
+        
         if (recipient && recipient.trim()) {
-          openConversation(recipient.trim(), body);
+          if (incomingMsg) {
+            openConversation(recipient.trim(), null, incomingMsg);
+          } else {
+            openConversation(recipient.trim(), draftBody, null);
+          }
         }
       } catch(e) {}
     });
+
+    // Expose global incoming handler for WebView bridge
+    window.handleIncomingSms = function(sender, messageBody) {
+      if (!sender || !messageBody) return;
+      openConversation(sender, null, messageBody);
+    };
   </script>
 </body>
 </html>

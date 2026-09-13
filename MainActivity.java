@@ -647,10 +647,16 @@ public class MainActivity extends Activity {
             }
             String body = intent.getStringExtra("sms_body");
             if (body == null) body = intent.getStringExtra(Intent.EXTRA_TEXT);
+            String incomingMsg = intent.getStringExtra("incoming_msg");
 
             if (recipient != null && !recipient.isEmpty()) {
-                final String targetUrl = "file:///android_asset/messages_screen.html?recipient=" + Uri.encode(recipient)
-                        + (body != null && !body.isEmpty() ? "&body=" + Uri.encode(body) : "");
+                StringBuilder urlBuilder = new StringBuilder("file:///android_asset/messages_screen.html?recipient=").append(Uri.encode(recipient));
+                if (incomingMsg != null && !incomingMsg.isEmpty()) {
+                    urlBuilder.append("&incoming_msg=").append(Uri.encode(incomingMsg));
+                } else if (body != null && !body.isEmpty()) {
+                    urlBuilder.append("&body=").append(Uri.encode(body));
+                }
+                final String targetUrl = urlBuilder.toString();
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
