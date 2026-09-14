@@ -223,16 +223,16 @@
 
     .cbe-processing-card-wrapper {
       position: relative !important;
-      width: 207px !important;
-      height: 139px !important;
-      max-width: 85vw !important;
+      width: 104px !important;
+      height: 70px !important;
+      max-width: 50vw !important;
       aspect-ratio: 207 / 139 !important;
       flex-shrink: 0 !important;
       display: block !important;
       margin: 0 auto !important;
       overflow: hidden !important;
-      border-radius: 14px !important;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
       -webkit-transform: translateZ(0) !important;
       transform: translateZ(0) !important;
       -webkit-backface-visibility: hidden !important;
@@ -247,7 +247,7 @@
       height: 100% !important;
       display: block !important;
       object-fit: fill !important;
-      border-radius: 14px !important;
+      border-radius: 8px !important;
       pointer-events: none !important;
     }
 
@@ -261,8 +261,8 @@
       object-fit: fill !important;
       transform-origin: 50.72% 51.44% !important;
       -webkit-transform-origin: 50.72% 51.44% !important;
-      animation: cbeWatchDialOscillation 2.2s infinite ease-in-out !important;
-      -webkit-animation: cbeWatchDialOscillation 2.2s infinite ease-in-out !important;
+      animation: cbeWatchDialOscillation 3.2s infinite ease-in-out !important;
+      -webkit-animation: cbeWatchDialOscillation 3.2s infinite ease-in-out !important;
       will-change: transform !important;
     }
 
@@ -276,8 +276,8 @@
       object-fit: fill !important;
       transform-origin: 50.72% 51.44% !important;
       -webkit-transform-origin: 50.72% 51.44% !important;
-      animation: cbeWatchDialOppositeOscillation 2.2s infinite ease-in-out !important;
-      -webkit-animation: cbeWatchDialOppositeOscillation 2.2s infinite ease-in-out !important;
+      animation: cbeWatchDialOppositeOscillation 3.2s infinite ease-in-out !important;
+      -webkit-animation: cbeWatchDialOppositeOscillation 3.2s infinite ease-in-out !important;
       will-change: transform !important;
     }
 
@@ -466,9 +466,9 @@
   <!-- Processing Modal -->
   <div id="processing-modal" class="processing-modal-container" style="display: none;">
       <div class="cbe-processing-card-wrapper">
-          <img src="cbe_processing_card_bg.png" alt="Processing" class="cbe-processing-card-img" width="207" height="139">
-          <img src="cbe_processing_white_dots.png" alt="White Dots" class="cbe-processing-dots-layer" width="207" height="139">
-          <img src="cbe_processing_yellow_arcs.png" alt="Yellow Arcs" class="cbe-processing-arcs-layer" width="207" height="139">
+          <img src="cbe_processing_card_bg.png" alt="Processing" class="cbe-processing-card-img" width="104" height="70">
+          <img src="cbe_processing_white_dots.png" alt="White Dots" class="cbe-processing-dots-layer" width="104" height="70">
+          <img src="cbe_processing_yellow_arcs.png" alt="Yellow Arcs" class="cbe-processing-arcs-layer" width="104" height="70">
       </div>
       <div class="processing-text-details">
           <p id="proc-amount" style="font-weight: bold; margin-top: 15px;"></p>
@@ -1114,7 +1114,7 @@
               isSubmitting = false; 
               currentPin = ""; // Reset
               updatePinDots(currentPin); // Reset
-          }, 5000);
+          }, 7000);
         }
       });
     });
