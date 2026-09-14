@@ -87,13 +87,51 @@
     .star-3 { left: 87.5%; }
 
     .processing-modal-container {
-      background: transparent !important;
+      background: rgba(0, 0, 0, 0.45) !important;
       border: none !important;
       box-shadow: none !important;
       padding: 0 !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 9999 !important;
+      display: none;
+      align-items: center !important;
+      justify-content: center !important;
+      touch-action: none !important;
     }
 
     /* CBE Birr Watch-Dial Processing Arcs Animation */
+    @-webkit-keyframes cbeWatchDialOscillation {
+      0% {
+        -webkit-transform: rotate(0deg);
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      28% {
+        -webkit-transform: rotate(-135deg);
+        animation-timing-function: cubic-bezier(0.3, 0, 0.7, 1);
+      }
+      38% {
+        -webkit-transform: rotate(-135deg);
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      65% {
+        -webkit-transform: rotate(-30deg);
+        animation-timing-function: cubic-bezier(0.3, 0, 0.7, 1);
+      }
+      74% {
+        -webkit-transform: rotate(-30deg);
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      100% {
+        -webkit-transform: rotate(0deg);
+      }
+    }
+
     @keyframes cbeWatchDialOscillation {
       0% {
         transform: rotate(0deg);
@@ -126,6 +164,32 @@
     }
 
     /* Opposite Counter-Motion for White Dots (Mirror of Yellow Arcs Style) */
+    @-webkit-keyframes cbeWatchDialOppositeOscillation {
+      0% {
+        -webkit-transform: rotate(0deg);
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      28% {
+        -webkit-transform: rotate(135deg);
+        animation-timing-function: cubic-bezier(0.3, 0, 0.7, 1);
+      }
+      38% {
+        -webkit-transform: rotate(135deg);
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      65% {
+        -webkit-transform: rotate(30deg);
+        animation-timing-function: cubic-bezier(0.3, 0, 0.7, 1);
+      }
+      74% {
+        -webkit-transform: rotate(30deg);
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      100% {
+        -webkit-transform: rotate(0deg);
+      }
+    }
+
     @keyframes cbeWatchDialOppositeOscillation {
       0% {
         transform: rotate(0deg);
@@ -158,43 +222,63 @@
     }
 
     .cbe-processing-card-wrapper {
-      position: relative;
-      width: min(210px, 50vw) !important;
-      max-width: 220px !important;
-      height: auto;
-      display: inline-block;
-      overflow: hidden;
-      border-radius: 14px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      position: relative !important;
+      width: 207px !important;
+      height: 139px !important;
+      max-width: 85vw !important;
+      aspect-ratio: 207 / 139 !important;
+      flex-shrink: 0 !important;
+      display: block !important;
+      margin: 0 auto !important;
+      overflow: hidden !important;
+      border-radius: 14px !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+      -webkit-transform: translateZ(0) !important;
+      transform: translateZ(0) !important;
+      -webkit-backface-visibility: hidden !important;
+      backface-visibility: hidden !important;
     }
 
     .cbe-processing-card-img {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
       width: 100% !important;
-      height: auto !important;
-      display: block;
-      border-radius: 14px;
+      height: 100% !important;
+      display: block !important;
+      object-fit: fill !important;
+      border-radius: 14px !important;
+      pointer-events: none !important;
     }
 
     .cbe-processing-arcs-layer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      transform-origin: 50.72% 51.44%;
-      animation: cbeWatchDialOscillation 2.2s infinite ease-in-out;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      pointer-events: none !important;
+      object-fit: fill !important;
+      transform-origin: 50.72% 51.44% !important;
+      -webkit-transform-origin: 50.72% 51.44% !important;
+      animation: cbeWatchDialOscillation 2.2s infinite ease-in-out !important;
+      -webkit-animation: cbeWatchDialOscillation 2.2s infinite ease-in-out !important;
+      will-change: transform !important;
     }
 
     .cbe-processing-dots-layer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      transform-origin: 50.72% 51.44%;
-      animation: cbeWatchDialOppositeOscillation 2.2s infinite ease-in-out;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      pointer-events: none !important;
+      object-fit: fill !important;
+      transform-origin: 50.72% 51.44% !important;
+      -webkit-transform-origin: 50.72% 51.44% !important;
+      animation: cbeWatchDialOppositeOscillation 2.2s infinite ease-in-out !important;
+      -webkit-animation: cbeWatchDialOppositeOscillation 2.2s infinite ease-in-out !important;
+      will-change: transform !important;
     }
 
     .processing-text-details {
@@ -380,11 +464,11 @@
   </div>
 
   <!-- Processing Modal -->
-  <div id="processing-modal" class="processing-modal-container" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 3000; background: rgba(0,0,0,0.4); flex-direction: column; align-items: center; justify-content: center;">
+  <div id="processing-modal" class="processing-modal-container" style="display: none;">
       <div class="cbe-processing-card-wrapper">
-          <img src="cbe_processing_card_bg.png" alt="Processing" class="cbe-processing-card-img">
-          <img src="cbe_processing_white_dots.png" alt="White Dots" class="cbe-processing-dots-layer">
-          <img src="cbe_processing_yellow_arcs.png" alt="Yellow Arcs" class="cbe-processing-arcs-layer">
+          <img src="cbe_processing_card_bg.png" alt="Processing" class="cbe-processing-card-img" width="207" height="139">
+          <img src="cbe_processing_white_dots.png" alt="White Dots" class="cbe-processing-dots-layer" width="207" height="139">
+          <img src="cbe_processing_yellow_arcs.png" alt="Yellow Arcs" class="cbe-processing-arcs-layer" width="207" height="139">
       </div>
       <div class="processing-text-details">
           <p id="proc-amount" style="font-weight: bold; margin-top: 15px;"></p>
