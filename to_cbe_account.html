@@ -93,10 +93,108 @@
       padding: 0 !important;
     }
 
+    /* CBE Birr Watch-Dial Processing Arcs Animation */
+    @keyframes cbeWatchDialOscillation {
+      0% {
+        transform: rotate(0deg);
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      28% {
+        /* Rotates counter-clockwise (to the left) without completing full circle, then pauses */
+        transform: rotate(-135deg);
+        animation-timing-function: cubic-bezier(0.3, 0, 0.7, 1);
+      }
+      38% {
+        /* Hesitation/brief pause before swinging back */
+        transform: rotate(-135deg);
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      65% {
+        /* Returns toward origin but stops short before reaching 0deg */
+        transform: rotate(-30deg);
+        animation-timing-function: cubic-bezier(0.3, 0, 0.7, 1);
+      }
+      74% {
+        /* Brief pause at return point */
+        transform: rotate(-30deg);
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      100% {
+        /* Returns to start cycle */
+        transform: rotate(0deg);
+      }
+    }
+
+    /* Opposite Counter-Motion for White Dots (Mirror of Yellow Arcs Style) */
+    @keyframes cbeWatchDialOppositeOscillation {
+      0% {
+        transform: rotate(0deg);
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      28% {
+        /* Rotates clockwise (opposite of yellow arcs) without completing full circle, then pauses */
+        transform: rotate(135deg);
+        animation-timing-function: cubic-bezier(0.3, 0, 0.7, 1);
+      }
+      38% {
+        /* Hesitation/brief pause before swinging back */
+        transform: rotate(135deg);
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      65% {
+        /* Returns toward origin but stops short before reaching 0deg */
+        transform: rotate(30deg);
+        animation-timing-function: cubic-bezier(0.3, 0, 0.7, 1);
+      }
+      74% {
+        /* Brief pause at return point */
+        transform: rotate(30deg);
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      100% {
+        /* Returns to start cycle */
+        transform: rotate(0deg);
+      }
+    }
+
+    .cbe-processing-card-wrapper {
+      position: relative;
+      width: min(210px, 50vw) !important;
+      max-width: 220px !important;
+      height: auto;
+      display: inline-block;
+      overflow: hidden;
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    }
+
     .cbe-processing-card-img {
-      width: 120px !important; /* Small, clean footprint */
+      width: 100% !important;
       height: auto !important;
-      border-radius: 12px;
+      display: block;
+      border-radius: 14px;
+    }
+
+    .cbe-processing-arcs-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      transform-origin: 50.72% 51.44%;
+      animation: cbeWatchDialOscillation 2.2s infinite ease-in-out;
+    }
+
+    .cbe-processing-dots-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      transform-origin: 50.72% 51.44%;
+      animation: cbeWatchDialOppositeOscillation 2.2s infinite ease-in-out;
     }
 
     .processing-text-details {
@@ -283,7 +381,11 @@
 
   <!-- Processing Modal -->
   <div id="processing-modal" class="processing-modal-container" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 3000; background: rgba(0,0,0,0.4); flex-direction: column; align-items: center; justify-content: center;">
-      <img src="cbe_processing_card.png" alt="Processing" class="cbe-processing-card-img">
+      <div class="cbe-processing-card-wrapper">
+          <img src="cbe_processing_card_bg.png" alt="Processing" class="cbe-processing-card-img">
+          <img src="cbe_processing_white_dots.png" alt="White Dots" class="cbe-processing-dots-layer">
+          <img src="cbe_processing_yellow_arcs.png" alt="Yellow Arcs" class="cbe-processing-arcs-layer">
+      </div>
       <div class="processing-text-details">
           <p id="proc-amount" style="font-weight: bold; margin-top: 15px;"></p>
           <p id="proc-reason"></p>
