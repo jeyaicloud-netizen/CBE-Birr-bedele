@@ -208,7 +208,8 @@
     }
 
     function saveBalance() {
-        const balance = document.getElementById('admin-balance-input')?.value;
+        const balEl = document.getElementById('admin-balance-input');
+        const balance = balEl ? balEl.value : undefined;
         if (balance !== undefined && balance !== '') {
           if (window.CbeStorage && typeof window.CbeStorage.setExactBalance === 'function') {
             window.CbeStorage.setExactBalance(balance);
@@ -230,8 +231,8 @@
     function saveAccount() {
         const nameInput = document.getElementById('acc-name');
         const numInput = document.getElementById('acc-number');
-        const name = nameInput?.value?.trim();
-        const number = numInput?.value?.trim();
+        const name = nameInput && nameInput.value ? nameInput.value.trim() : '';
+        const number = numInput && numInput.value ? numInput.value.trim() : '';
         if (!name || !number) {
             alert('Please enter both Account Name and Account Number');
             return;
@@ -283,9 +284,12 @@
     }
 
     function updateAccount() {
-        const index = document.getElementById('edit-acc-index')?.value;
-        const name = document.getElementById('edit-acc-name')?.value?.trim();
-        const number = document.getElementById('edit-acc-number')?.value?.trim();
+        const idxEl = document.getElementById('edit-acc-index');
+        const nameEl = document.getElementById('edit-acc-name');
+        const numEl = document.getElementById('edit-acc-number');
+        const index = idxEl ? idxEl.value : undefined;
+        const name = nameEl && nameEl.value ? nameEl.value.trim() : '';
+        const number = numEl && numEl.value ? numEl.value.trim() : '';
         if (!name || !number || index === undefined) return;
         
         try {

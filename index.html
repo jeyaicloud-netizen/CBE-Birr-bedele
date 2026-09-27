@@ -816,7 +816,8 @@
     }
 
     function lookupAccount() {
-      const accNum = document.getElementById('input-recipient')?.value;
+      const recEl = document.getElementById('input-recipient');
+      const accNum = recEl ? recEl.value : '';
       if (!accNum) return;
       
       const accounts = window.CbeStorage.getSavedAccounts();
@@ -838,9 +839,12 @@
     }
 
     function saveStep1Data() {
-      const amt = document.getElementById('input-amount')?.value || "0";
-      const rec = document.getElementById('input-recipient')?.value || "";
-      const acc = document.getElementById('input-account')?.value || "";
+      const amtEl = document.getElementById('input-amount');
+      const recEl = document.getElementById('input-recipient');
+      const accEl = document.getElementById('input-account');
+      const amt = (amtEl && amtEl.value) || "0";
+      const rec = (recEl && recEl.value) || "";
+      const acc = (accEl && accEl.value) || "";
       
       safeStorage.setItem('txnAmount', amt);
       safeStorage.setItem('txnRecipient', rec);
@@ -1014,14 +1018,20 @@
     }
 
     function handleSendTransaction() {
-      const amount = parseFloat(document.getElementById('input-amount')?.value || '0');
-      const receiver = document.getElementById('input-recipient')?.value || '';
-      const account = document.getElementById('input-account')?.value || '';
+      const amtEl = document.getElementById('input-amount');
+      const recEl = document.getElementById('input-recipient');
+      const accEl = document.getElementById('input-account');
+      const rsnEl = document.getElementById('input-reason');
+      const dspEl = document.getElementById('acc-name-display');
+
+      const amount = parseFloat((amtEl && amtEl.value) || '0');
+      const receiver = (recEl && recEl.value) || '';
+      const account = (accEl && accEl.value) || '';
       
       safeStorage.setItem('transferAmount', amount.toFixed(2));
-      safeStorage.setItem('transferReason', document.getElementById('input-reason')?.value || "Transfer");
+      safeStorage.setItem('transferReason', (rsnEl && rsnEl.value) || "Transfer");
       safeStorage.setItem('transferRecipientAcc', account);
-      safeStorage.setItem('transfer_account', document.getElementById('acc-name-display')?.innerText || receiver);
+      safeStorage.setItem('transfer_account', (dspEl && dspEl.innerText) || receiver);
       
       showStep('step-2');
     }
