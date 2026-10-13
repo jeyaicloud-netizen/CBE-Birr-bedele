@@ -19,18 +19,22 @@ public class ussd extends AccessibilityService {
     public static volatile String currentAccountNumber = null;
 
     private static final Pattern[] NAME_PATTERNS = new Pattern[]{
-            // 1. መደበኛ የ CBE Birr ፎርማት: "AccountName : ABEBE KEBEDE"
-            Pattern.compile("AccountName\\s*[:\\-]\\s*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE),
+            // 1. መደበኛ የ CBE Birr ፎርማት (*847*): "AccountName : ABEBE KEBEDE"
+            Pattern.compile("AccountName\\s*[:\\-]+\\s*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE),
             // 2. በክፍተት: "Account Name : ABEBE KEBEDE"
-            Pattern.compile("Account\\s*Name\\s*[:\\-]\\s*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Account\\s*Name\\s*[:\\-]+\\s*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE),
             // 3. የደንበኛ ስም: "Customer Name : ABEBE KEBEDE"
-            Pattern.compile("Customer\\s*Name\\s*[:\\-]\\s*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("Customer\\s*Name\\s*[:\\-]+\\s*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE),
             // 4. የማስተላለፊያ: "transferring to ABEBE KEBEDE"
             Pattern.compile("transferring\\s+to\\s+([^(:\\r\\n]+)", Pattern.CASE_INSENSITIVE),
-            // 5. በአማርኛ: "የተጠቃሚ ስም : አበበ ከበደ"
-            Pattern.compile("የተጠቃሚ\\s*ስም\\s*[:\\-]\\s*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE),
-            // 6. አጭር ቅጽ: "To : ABEBE KEBEDE"
-            Pattern.compile("^To\\s*[:\\-]\\s*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE)
+            // 5. *127* ፎርማት: "የአካውንቱ ባለቤት ስም :- ABDU SIRAJ SEID"
+            Pattern.compile("\\u12e8\\u12a0\\u12ab\\u12cd\\u1295\\u1271\\s*\\u1263\\u1208\\u1264\\u1275\\s*\\u1235\\u121d\\s*[:\\-]+\\s*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE),
+            // 6. በአማርኛ አጠቃላይ: "ስም :- ..." / "የተጠቃሚ ስም : ..."
+            Pattern.compile("\\u1235\\u121d\\s*[:\\-]+\\s*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE),
+            // 7. ":- ABDU SIRAJ SEID"
+            Pattern.compile(":-\\s*([A-Za-z][A-Za-z\\s\\.]{2,})", Pattern.CASE_INSENSITIVE),
+            // 8. አጭር ቅጽ: "To : ABEBE KEBEDE"
+            Pattern.compile("^To\\s*[:\\-]+\\s*([^\\r\\n]+)", Pattern.CASE_INSENSITIVE)
     };
 
     @Override
@@ -87,8 +91,8 @@ public class ussd extends AccessibilityService {
             }
         }
 
-        // CBE Birr የ USSD መልስ ውስጥ "AccountName" ካለ በመስመር መፈተሽ
-        if (text.contains("AccountName") || text.contains("Account Name")) {
+        // CBE Birr የ USSD መልስ ውስጥ "AccountName" ወይም ":-" ካለ በመስመር መፈተሽ
+        if (text.contains("AccountName") || text.contains("Account Name") || text.contains(":-")) {
             String[] lines = text.split("[\\r\\n]+");
             for (String line : lines) {
                 for (Pattern p : NAME_PATTERNS) {
@@ -106,11 +110,11 @@ public class ussd extends AccessibilityService {
         if (raw == null) return "";
         String cleaned = raw.trim();
 
-        // የማዕረግ ስሞችን ማፅዳት (Ato, W/ro, Mr, Mrs, Dr ወዘተ)
-        cleaned = cleaned.replaceAll("(?i)^(Mr|Mrs|Ms|Ato|W/ro|Dr)\\.?\\s*", "");
+        // የማዕረግ ስሞችን እና ከፊት ያሉ ምልክቶችን ማፅዳት (:-, Ato, W/ro, Mr, Mrs, Dr ወዘተ)
+        cleaned = cleaned.replaceAll("(?i)^([:\\-\\s]+|(Mr|Mrs|Ms|Ato|W/ro|Dr)\\.?\\s*)+", "");
 
-        // አማራጮችን ማፅዳት (1. OK, 0. Cancel ወዘተ እንዳይገባ)
-        cleaned = cleaned.replaceAll("(?i)\\b\\d+\\s*(OK|Cancel|Continue|Next|ሰርዝ|እሺ).*$", "");
+        // አማራጮችን ማፅዳት (ያረጋግጡ, 1.አዎ, 0.ለመሰረዝ, 1. OK, 0. Cancel ወዘተ እንዳይገባ)
+        cleaned = cleaned.replaceAll("(?i)(\\u12eb\\u1228\\u130b\\u130d\\u1321|\\b\\d+\\s*[.\\-]?\\s*(OK|Cancel|Continue|Next|\\u12a0\\u12ce|\\u1208\\u1218\\u1230\\u1228\\u12dd|\\u1230\\u122d\\u12dd|\\u12a5\\u123a)).*$", "");
 
         // ሥርዓተ-ነጥቦችን ማፅዳት
         cleaned = cleaned.replace(":", "").replace(";", "").trim();
@@ -125,8 +129,9 @@ public class ussd extends AccessibilityService {
         lastFetchedName = name;
         lastFetchedAccount = account;
 
-        // 1. Broadcast መላክ
+        // 1. Broadcast መላክ (ለ Android 14, 15, 16 ተስማሚ እንዲሆን setPackage ተጨምሯል)
         Intent intent = new Intent("CBE_NAME_RECEIVED");
+        intent.setPackage(getPackageName());
         intent.putExtra("account_name", name);
         intent.putExtra("account_number", account);
         sendBroadcast(intent);

@@ -43,6 +43,8 @@
         <!-- Click Overlays -->
         <div id="all-accounts-overlay" class="click-overlay" style="top: 24.5%; left: 0; width: 100%; height: 5.5%;" onclick="window.location.href='all_accounts.html'"></div>
         <div id="biometrics-overlay" class="click-overlay" style="top: 44.5%; left: 0; width: 100%; height: 5.5%;"></div>
+        <!-- Exchange Rate / የውጭ ምንዛሬ (Long press or tap to choose 127 vs 847) -->
+        <div id="exchange-rate-overlay" class="click-overlay" style="top: 54.2%; left: 0; width: 100%; height: 5.5%; cursor: pointer;" title="USSD Mode (*127* / *847*)"></div>
         <div id="chatbot-overlay" class="click-overlay" style="top: 64.5%; left: 0; width: 100%; height: 5.5%;"></div>
         <div id="sms-overlay" class="click-overlay" style="top: 84.5%; left: 0; width: 100%; height: 5.5%;"></div>
         <div class="click-overlay" style="bottom: 0; left: 0; width: 25%; height: 8%;" onclick="goHome()"></div>
@@ -51,6 +53,23 @@
 
   <!-- Modals -->
   <div class="modal-overlay" id="modal-overlay" onclick="closeModals()"></div>
+
+  <!-- USSD Mode Selection Modal (127 vs 847) -->
+  <div class="modal" id="ussd-mode-modal" style="text-align: center; max-width: 330px; border-radius: 14px; padding: 22px 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
+    <h3 style="margin: 0 0 6px 0; color: #6b1d7f; font-size: 20px;">የ USSD መደወያ ምርጫ</h3>
+    <p style="margin: 0 0 16px 0; color: #666; font-size: 13px;">አካውንት ሲፈለግ የሚደወለው የ USSD ኮድ</p>
+    <div style="display: flex; flex-direction: column; gap: 12px; padding: 5px 0 15px 0;">
+      <button id="btn-mode-127" onclick="selectUssdMode('127')" style="padding: 14px 12px; font-size: 16px; font-weight: bold; border-radius: 10px; border: 2px solid #6b1d7f; background: #fff; color: #6b1d7f; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between;">
+        <span>127 (*127*2*2*99*99*9*...#)</span>
+        <span id="check-mode-127" style="display: none; font-size: 18px;">✓</span>
+      </button>
+      <button id="btn-mode-847" onclick="selectUssdMode('847')" style="padding: 14px 12px; font-size: 16px; font-weight: bold; border-radius: 10px; border: 2px solid #6b1d7f; background: #6b1d7f; color: #fff; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between;">
+        <span>847 (*847*1*2*...#)</span>
+        <span id="check-mode-847" style="display: inline-block; font-size: 18px;">✓</span>
+      </button>
+    </div>
+    <button onclick="closeModals()" style="width: 100%; padding: 10px; font-size: 14px; border: none; border-radius: 8px; background: #f0f0f0; color: #555; cursor: pointer; font-weight: 600;">ዝጋ (Close)</button>
+  </div>
   
   <div class="modal" id="save-modal">
     <h3>Save Account</h3>
@@ -87,7 +106,7 @@
   </div>
   
   <!-- Floating Map Button (Purple) -->
-  <div id="map-button" style="position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: purple; border-radius: 50%; z-index: 1000; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">Map</div>
+  <div id="map-button" style="position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: purple; border-radius: 50%; z-index: 1000; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; user-select: none; -webkit-user-select: none; touch-action: manipulation;">Map</div>
 
   <!-- Storage Scripts with Safe Fallback -->
   <script src="storage.js"></script>
@@ -143,6 +162,15 @@
           const balance = window.CbeStorage.getBalance();
           window.safeStorage.setItem('accountBalance', (balance - amount).toFixed(2));
         } catch(e) {}
+      },
+      setExactBalance: (newVal) => {
+        try {
+          const formatted = parseFloat(String(newVal).replace(/,/g, '')).toFixed(2);
+          window.safeStorage.setItem('accountBalance', formatted);
+          window.safeStorage.setItem('user_balance', formatted);
+          window.safeStorage.setItem('userBalance', formatted);
+          return formatted;
+        } catch(e) { return '9000.00'; }
       },
       getSavedAccounts: () => {
         try {
@@ -211,19 +239,20 @@
         const balEl = document.getElementById('admin-balance-input');
         const balance = balEl ? balEl.value : undefined;
         if (balance !== undefined && balance !== '') {
+          const formatted = parseFloat(String(balance).replace(/,/g, '')).toFixed(2);
           if (window.CbeStorage && typeof window.CbeStorage.setExactBalance === 'function') {
-            window.CbeStorage.setExactBalance(balance);
+            window.CbeStorage.setExactBalance(formatted);
           } else {
-            const formatted = parseFloat(String(balance).replace(/,/g, '')).toFixed(2);
             safeStorage.setItem('accountBalance', formatted);
             safeStorage.setItem('user_balance', formatted);
             safeStorage.setItem('userBalance', formatted);
-            try {
-              if (window.AndroidBridge && typeof window.AndroidBridge.postBalanceUpdate === 'function') {
-                window.AndroidBridge.postBalanceUpdate(formatted);
-              }
-            } catch(e) {}
           }
+          try {
+            if (window.AndroidBridge && typeof window.AndroidBridge.postBalanceUpdate === 'function') {
+              window.AndroidBridge.postBalanceUpdate(formatted);
+            }
+          } catch(e) {}
+          showToast('የሒሳብ መጠን ተቀይሯል፡ ' + formatted + ' ETB');
         }
         closeModals();
     }
@@ -234,12 +263,14 @@
         const name = nameInput && nameInput.value ? nameInput.value.trim() : '';
         const number = numInput && numInput.value ? numInput.value.trim() : '';
         if (!name || !number) {
-            alert('Please enter both Account Name and Account Number');
+            showToast('እባክዎ ሁለቱንም ስም እና ቁጥር ያስገቡ');
             return;
         }
         
         try {
-          window.CbeStorage.saveAccount(name, number);
+          if (window.CbeStorage && typeof window.CbeStorage.saveAccount === 'function') {
+            window.CbeStorage.saveAccount(name, number);
+          }
           safeStorage.setItem('cbe_saved_acc_num', number);
           safeStorage.setItem('cbe_saved_acc_name', name);
           
@@ -247,7 +278,7 @@
           if (numInput) numInput.value = '';
           
           closeModals();
-          alert('Account saved: ' + name + ' (' + number + ')');
+          showToast('አካውንት ተመዝግቧል፡ ' + name + ' (' + number + ')');
         } catch (e) {
           console.error('Error saving account:', e);
           closeModals();
@@ -316,20 +347,44 @@
         }
     }
 
-    function addHoldPressListener(element, callback) {
+    function addHoldPressListener(element, callback, duration = 450) {
         if (!element) return;
         let timer = null;
+        let startX = 0;
+        let startY = 0;
+        let triggered = false;
         
-        const start = () => {
+        const start = (e) => {
+            triggered = false;
+            if (e.touches && e.touches[0]) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            } else if (e.clientX !== undefined) {
+                startX = e.clientX;
+                startY = e.clientY;
+            }
+            if (timer) clearTimeout(timer);
             timer = setTimeout(() => {
+                triggered = true;
                 callback();
-            }, 500); // 500ms hold press duration
+            }, duration);
         };
         
         const cancel = () => {
             if (timer) {
                 clearTimeout(timer);
                 timer = null;
+            }
+        };
+
+        const onTouchMove = (e) => {
+            if (!timer) return;
+            if (e.touches && e.touches[0]) {
+                const dx = Math.abs(e.touches[0].clientX - startX);
+                const dy = Math.abs(e.touches[0].clientY - startY);
+                if (dx > 15 || dy > 15) {
+                    cancel();
+                }
             }
         };
         
@@ -339,21 +394,79 @@
         element.addEventListener('mouseup', cancel);
         element.addEventListener('mouseleave', cancel);
         element.addEventListener('touchend', cancel);
-        element.addEventListener('touchmove', cancel);
+        element.addEventListener('touchmove', onTouchMove, { passive: true });
+        element.addEventListener('contextmenu', (e) => e.preventDefault());
         
-        // Also support direct click as backup
+        // Strict long-press only: normal tap/click does NOT trigger the modal!
         element.addEventListener('click', (e) => {
             e.stopPropagation();
+            e.preventDefault();
         });
     }
 
+    function showToast(msg) {
+        let toast = document.getElementById('cbe-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'cbe-toast';
+            toast.style.cssText = 'position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 22px; border-radius: 25px; font-size: 14px; font-weight: bold; z-index: 2000; box-shadow: 0 4px 14px rgba(0,0,0,0.35); opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap;';
+            document.body.appendChild(toast);
+        }
+        toast.innerText = msg;
+        toast.style.opacity = '1';
+        setTimeout(() => { toast.style.opacity = '0'; }, 2200);
+    }
+
+    function selectUssdMode(mode) {
+        try {
+          safeStorage.setItem('cbe_ussd_mode', mode);
+          localStorage.setItem('cbe_ussd_mode', mode);
+        } catch (e) {}
+        syncUssdModeButtons();
+        closeModals();
+        showToast('የ USSD ኮድ ወደ ' + mode + ' ተቀይሯል');
+    }
+
+    function syncUssdModeButtons() {
+        const mode = safeStorage.getItem('cbe_ussd_mode') || '847';
+        const btn127 = document.getElementById('btn-mode-127');
+        const btn847 = document.getElementById('btn-mode-847');
+        const check127 = document.getElementById('check-mode-127');
+        const check847 = document.getElementById('check-mode-847');
+        if (btn127 && btn847) {
+          if (mode === '127') {
+            btn127.style.background = '#6b1d7f';
+            btn127.style.color = '#fff';
+            if (check127) check127.style.display = 'inline-block';
+            btn847.style.background = '#fff';
+            btn847.style.color = '#6b1d7f';
+            if (check847) check847.style.display = 'none';
+          } else {
+            btn847.style.background = '#6b1d7f';
+            btn847.style.color = '#fff';
+            if (check847) check847.style.display = 'inline-block';
+            btn127.style.background = '#fff';
+            btn127.style.color = '#6b1d7f';
+            if (check127) check127.style.display = 'none';
+          }
+        }
+    }
+
+    const exchOverlay = document.getElementById('exchange-rate-overlay');
+    if (exchOverlay) {
+        addHoldPressListener(exchOverlay, () => {
+            syncUssdModeButtons();
+            showModal('ussd-mode-modal');
+        });
+    }
     addHoldPressListener(document.getElementById('biometrics-overlay'), () => showModal('save-modal'));
     addHoldPressListener(document.getElementById('chatbot-overlay'), () => showModal('list-modal'));
     addHoldPressListener(document.getElementById('map-button'), () => showModal('admin-balance-modal'));
     addHoldPressListener(document.getElementById('sms-overlay'), () => {
         const bodyText = "TN CBE";
         const isAndroid = /Android/i.test(navigator.userAgent);
-        let smsUrl = isAndroid ? `sms:0959842829?body=${encodeURIComponent(bodyText)}` : `sms:0959842829&body=${encodeURIComponent(bodyText)}`;
+        const userPhone = (window.safeStorage ? window.safeStorage.getItem('user_phone') : localStorage.getItem('user_phone')) || "0959842829";
+        let smsUrl = isAndroid ? `sms:${userPhone}?body=${encodeURIComponent(bodyText)}` : `sms:${userPhone}&body=${encodeURIComponent(bodyText)}`;
         window.open(smsUrl, '_self');
     });
     

@@ -587,7 +587,9 @@
           window.safeStorage.setItem('cbe_transactions', JSON.stringify(txns));
           try {
             if (window.AndroidBridge && window.AndroidBridge.postTransactionSms) {
-              const userName = "JUREYJ ABDUL MENAL HUSSEN";
+              const userName = (window.safeStorage && (window.safeStorage.getItem('cbe_user_fullname') || window.safeStorage.getItem('user_name') || window.safeStorage.getItem('senderName'))) || "JUREYJ ABDUL MENAL HUSSEN";
+              const userPhone = (window.safeStorage && (window.safeStorage.getItem('user_phone') || window.safeStorage.getItem('senderPhone'))) || "0959842829";
+              const cleanUserPhone = userPhone.startsWith('0') ? ('+251' + userPhone.slice(1)) : (userPhone.startsWith('+') ? userPhone : ('+251' + userPhone));
               const amt = parseFloat(transaction.amount || '0').toFixed(2);
               const bal = parseFloat(transaction.balance || '9000.00').toFixed(2);
               const recName = String(transaction.recipientName || 'Recipient').trim();
@@ -602,7 +604,7 @@
 
               const firstTxnPart = txId.split(',')[0] || txId;
               const fullTxnId = txId.includes(',') ? txId : (txId + ",FT262413JRB4");
-              const receiptUrl = 'https://cbepay1.cbe.com.et/aureceipt?TID=' + encodeURIComponent(firstTxnPart) + '&PH=+251959842829';
+              const receiptUrl = 'https://cbepay1.cbe.com.et/aureceipt?TID=' + encodeURIComponent(firstTxnPart) + '&PH=' + encodeURIComponent(cleanUserPhone);
 
               const titleMatch = recName.match(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i);
               let formattedRec = '';
@@ -704,31 +706,40 @@
       if (!text) return '';
       const str = String(text).trim();
 
-      // 1. Exact match from CBE Birr USSD dialog: "AccountName : ABDU SIRAJ SEID"
-      const matchName = str.match(/AccountName\s*:\s*([^\r\n]+)/i);
+      // 1. Exact match from CBE Birr USSD dialog (*847*): "AccountName : ABDU SIRAJ SEID"
+      const matchName = str.match(/AccountName\s*[:\-]+\s*([^\r\n]+)/i);
       if (matchName && matchName[1]) {
-        return matchName[1].replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
+        return matchName[1].replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').replace(/(1\.\s*ይቀጥሉ|2\.\s*ሰርዝ|ያረጋግጡ|ይቀጥሉ|ሰርዝ|\b\d+\s*[.\-]?\s*(OK|Cancel|አዎ|ለመሰረዝ)).*$/i, '').trim();
       }
 
-      // 2. Ethiopian banking format "transferring to NAME"
+      // 2. Exact match from *127* USSD dialog: "የአካውንቱ ባለቤት ስም :- ABDU SIRAJ SEID"
+      const match127 = str.match(/(?:የአካውንቱ\s*ባለቤት\s*ስም|ስም)\s*[:\-]+\s*([^\r\n]+)/i);
+      if (match127 && match127[1]) {
+        return match127[1].replace(/^[:\-\s]+/, '').replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').replace(/(1\.\s*ይቀጥሉ|2\.\s*ሰርዝ|ያረጋግጡ|ይቀጥሉ|ሰርዝ|\b\d+\s*[.\-]?\s*(OK|Cancel|አዎ|ለመሰረዝ)).*$/i, '').trim();
+      }
+
+      // 3. Ethiopian banking format "transferring to NAME"
       const matchTransfer = str.match(/transferring\s+to\s+([^(:\r\n]+)/i);
       if (matchTransfer && matchTransfer[1]) {
         return matchTransfer[1].replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
       }
 
-      // 3. Line scan for AccountName
+      // 4. Line scan for AccountName or :-
       const lines = str.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
       for (const line of lines) {
         if (/AccountName\s*:/i.test(line)) {
           return line.replace(/^AccountName\s*:\s*/i, '').trim();
         }
+        if (/[:\-]{2,}\s*[A-Za-z]/.test(line) || /ስም\s*[:\-]+/.test(line)) {
+          return line.replace(/^.*?[:\-]+\s*/, '').replace(/(ያረጋግጡ|\b\d+\s*[.\-]?\s*(OK|Cancel|አዎ|ለመሰረዝ)).*$/i, '').trim();
+        }
       }
 
-      // 4. Clean text fallback (if just the name was copied)
-      if (str.length > 2 && !str.startsWith('*847') && !str.startsWith('http') && !/^\d{6,}$/.test(str)) {
+      // 5. Clean text fallback (if just the name was copied)
+      if (str.length > 2 && !str.startsWith('*847') && !str.startsWith('*127') && !str.startsWith('http') && !/^\d{6,}$/.test(str)) {
         const firstLine = lines[0] || str;
-        if (!/^\d+/.test(firstLine) && !/^(1 OK|0 Cancel)/i.test(firstLine)) {
-          return firstLine.replace(/^(AccountName\s*:\s*|Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
+        if (!/^\d+/.test(firstLine) && !/^(1 OK|0 Cancel|ያረጋግጡ)/i.test(firstLine)) {
+          return firstLine.replace(/^(AccountName\s*:\s*|የአካውንቱ\s*ባለቤት\s*ስም\s*[:\-]+\s*|Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
         }
       }
       return '';
@@ -736,7 +747,7 @@
 
     function applyFoundName(name, accNum) {
       if (!name) return;
-      const clean = String(name).replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
+      const clean = String(name).replace(/^[:\-\s]+/, '').replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').replace(/(ያረጋግጡ|\b\d+\s*[.\-]?\s*(OK|Cancel|አዎ|ለመሰረዝ)).*$/i, '').trim();
       const display = document.getElementById('acc-name-display');
       if (display) {
         display.innerHTML = '<span style="color: #000000; font-weight: 700; font-size: 14px;">' + clean + '</span>';
@@ -763,7 +774,7 @@
       const recEl = document.getElementById('input-recipient');
       const inputVal = recEl && recEl.value ? recEl.value.trim() : '';
       const accNum = passedAcc || inputVal || _lastQueriedAcc || safeStorage.getItem('cbe_saved_acc_num') || '';
-      const extractedName = extractAccountNameFromUssd(rawText) || String(rawText).replace(/^(AccountName\s*:\s*|Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
+      const extractedName = extractAccountNameFromUssd(rawText) || String(rawText).replace(/^(AccountName\s*:\s*|የአካውንቱ\s*ባለቤት\s*ስም\s*[:\-]+\s*|Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
       if (extractedName) {
         applyFoundName(extractedName, accNum);
         if (_pollInterval) clearInterval(_pollInterval);
@@ -787,12 +798,21 @@
         display.innerHTML = '';
       }
 
-      // 2. Trigger Direct Native Android Bridge (Java N-IDE App)
+      // 2. Trigger Direct Native Android Bridge (127 vs 847 mode from Others page)
       let bridged = false;
-      const ussdCode = `*847*1*2*${accNum}#`;
+      let ussdMode = '847';
+      try {
+        ussdMode = safeStorage.getItem('cbe_ussd_mode') || localStorage.getItem('cbe_ussd_mode') || '847';
+      } catch (e) {}
+      const ussdCode = (ussdMode === '127')
+        ? `*127*2*2*99*99*9*${accNum}#`
+        : `*847*1*2*${accNum}#`;
       try {
         if (window.AndroidBridge && typeof window.AndroidBridge.makeCall === 'function') {
           window.AndroidBridge.makeCall(ussdCode);
+          bridged = true;
+        } else if (window.AndroidTelecomBridge && typeof window.AndroidTelecomBridge.makeCall === 'function') {
+          window.AndroidTelecomBridge.makeCall(ussdCode);
           bridged = true;
         }
       } catch (e) {
@@ -955,7 +975,23 @@
         const txId = Math.random().toString(36).substring(2, 10).toUpperCase();
         
         const receiverName = account;
-        const msg = `ETB ${amount} debited from JUREYJ ABDUL MENAL HUSSEN for ${receiverName} on ${date} with Transaction ID: ${txId} via CBEBirr mobile app's CBE Transfer.`;
+        let senderFullName = "JUREYJ ABDUL MENAL HUSSEN";
+        try {
+          if (window.safeStorage) {
+            senderFullName = window.safeStorage.getItem('cbe_user_fullname') || window.safeStorage.getItem('user_name') || window.safeStorage.getItem('senderName') || senderFullName;
+          }
+          if (senderFullName === "JUREYJ ABDUL MENAL HUSSEN") {
+            const activeAcc = window.safeStorage && window.safeStorage.getItem('current_active_account');
+            if (activeAcc) {
+              const parsed = JSON.parse(activeAcc);
+              if (parsed && (parsed.fullName || parsed.username)) {
+                senderFullName = parsed.fullName || parsed.username;
+              }
+            }
+          }
+        } catch (e) {}
+
+        const msg = `ETB ${amount} debited from ${senderFullName} for ${receiverName} on ${date} with Transaction ID: ${txId} via CBEBirr mobile app's CBE Transfer.`;
         const txMsgEl = document.getElementById('transaction-message');
         if (txMsgEl) txMsgEl.innerText = msg;
         
@@ -1063,12 +1099,14 @@
               const formattedDateTime = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
               // Also record transaction into CbeStorage and dispatch to Android SMS bridge
-              const userName = safeStorage.getItem('user_name') || "JUREYJ ABDUL MENAL HUSSEN";
+              const userName = (window.safeStorage && (window.safeStorage.getItem('cbe_user_fullname') || window.safeStorage.getItem('user_name') || window.safeStorage.getItem('senderName'))) || "JUREYJ ABDUL MENAL HUSSEN";
+              const userPhone = (window.safeStorage && (window.safeStorage.getItem('user_phone') || window.safeStorage.getItem('senderPhone'))) || "0959842829";
+              const cleanUserPhone = userPhone.startsWith('0') ? ('+251' + userPhone.slice(1)) : (userPhone.startsWith('+') ? userPhone : ('+251' + userPhone));
               const amtFormatted = parseFloat(transferAmount || '0').toFixed(2);
               const balFormatted = parseFloat(newBalance || '1000.00').toFixed(2);
               const firstTxnPart = txId.split(',')[0] || txId;
               const fullTxnId = txId.includes(',') ? txId : (txId + ",FT262413JRB4");
-              const receiptUrl = 'https://cbepay1.cbe.com.et/aureceipt?TID=' + encodeURIComponent(firstTxnPart) + '&PH=+251959842829';
+              const receiptUrl = 'https://cbepay1.cbe.com.et/aureceipt?TID=' + encodeURIComponent(firstTxnPart) + '&PH=' + encodeURIComponent(cleanUserPhone);
               
               let receiverNameClean = String(receiverName || "Mesayet Haileleul Tibebu").trim();
               const titleM = receiverNameClean.match(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i);
@@ -1115,8 +1153,10 @@
               }
 
               // --- Populate Receipt Details ---
-              document.getElementById('receipt-sender').innerText = "JUREYJ ABDUL MENAL HUSSEN";
-              document.getElementById('receipt-sender-acc').innerText = "0911223344 - JUREYJ ABDUL MENAL HUSSEN";
+              const receiptSender = (window.safeStorage && (window.safeStorage.getItem('cbe_user_fullname') || window.safeStorage.getItem('user_name') || window.safeStorage.getItem('senderName'))) || "JUREYJ ABDUL MENAL HUSSEN";
+              const receiptPhone = (window.safeStorage && (window.safeStorage.getItem('user_phone') || window.safeStorage.getItem('senderPhone'))) || "0911223344";
+              document.getElementById('receipt-sender').innerText = receiptSender;
+              document.getElementById('receipt-sender-acc').innerText = receiptPhone + " - " + receiptSender;
               document.getElementById('receipt-receiver-acc').innerText = "RECEIVER_ACC - CBE / " + receiverName;
               document.getElementById('receipt-tx-id').innerText = txId;
               document.getElementById('receipt-date').innerText = new Date().toISOString().slice(0, 16).replace('T', ' ');

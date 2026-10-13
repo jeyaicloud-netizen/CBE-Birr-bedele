@@ -226,6 +226,74 @@
         transform: translateX(-50%);
       }
     }
+
+    /* CBE Pin Stars & Keypad Interaction */
+    .pin-dots-container {
+      position: absolute;
+      top: 27.24%;
+      left: 33.47%;
+      width: 33.06%;
+      height: 5.16%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 50;
+      pointer-events: none;
+      transition: transform 0.2s ease, top 0.2s ease, height 0.2s ease;
+    }
+    .pin-dot-display {
+      width: 21.85%;
+      height: 100%;
+      border: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      outline: none !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: monospace, sans-serif;
+      font-size: 22px;
+      font-weight: 300; /* Thin stroke star */
+      color: #111827;
+      padding-top: 4px; /* Optical vertical centering for asterisk glyph */
+      box-sizing: border-box;
+      line-height: 1;
+      user-select: none;
+    }
+    .pin-dot-display.filled {
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      color: #111827;
+    }
+    .pin-dot-display.error {
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      color: #ef4444 !important;
+    }
+    @keyframes pinShakeAnim {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-10px); }
+      40%, 80% { transform: translateX(10px); }
+    }
+    .pin-shake {
+      animation: pinShakeAnim 0.36s ease-in-out !important;
+    }
+    .pin-key-box {
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      transition: background-color 0.08s ease, transform 0.06s ease;
+    }
+    .pin-key-box:active,
+    .pin-key-box.key-pressed {
+      background-color: transparent !important;
+      transform: scale(0.96) !important;
+    }
   </style>
 </head>
 <body>
@@ -253,7 +321,15 @@
             <span class="cbe-signin-marquee-item" id="signin-marquee-text-2">Welcome to CBEBirr plus app!</span>
           </div>
         </div>
-        <div onclick="showPage('pin-page')" style="position: absolute; top: 41.5%; left: 10%; width: 80%; height: 6.5%; z-index: 100; cursor: pointer; background: transparent;"></div>
+        <!-- Phone Number Input Area -->
+        <div id="signin-phone-box" onclick="document.getElementById('signin-phone-input').focus()" style="position: absolute; top: 34.3%; left: 6.5%; width: 87%; height: 4.8%; z-index: 120; cursor: text;"></div>
+        <input type="tel" id="signin-phone-input" placeholder="" oninput="safeStorage.setItem('user_phone', this.value)" style="position: absolute; top: 34.3%; left: 20%; width: 72%; height: 4.8%; background: transparent; border: none; outline: none; font-size: 16px; font-weight: 700; color: #222; z-index: 130; padding: 0 4px;" />
+        
+        <div onclick="handleSignInProceed()" style="position: absolute; top: 41.5%; left: 10%; width: 80%; height: 6.5%; z-index: 100; cursor: pointer; background: transparent;"></div>
+        
+        <!-- Create Account Area -->
+        <div id="signin-create-acc-box" onclick="openCreateAccountModal()" style="position: absolute; top: 51.0%; left: 20%; width: 60%; height: 3.0%; z-index: 120; cursor: pointer;"></div>
+        
         <div onclick="toggleSigninLanguage()" style="position: absolute; top: 33px; left: 13px; width: 85px; height: 38px; cursor: pointer; background: transparent; z-index: 101;"></div>
       </div>
     </div>
@@ -372,6 +448,9 @@
         <!-- Step 6: Success -->
         <div id="step-6" class="step" style="position: relative; width: 100%; height: 100%;">
             <img src="step6_transaction_success_bg.png" alt="Send Money Step 6" style="width: 100%; height: 100%; object-fit: fill; display: block;">
+            <div style="position: absolute; top: 26.5%; left: 6.5%; width: 87%; z-index: 50; box-sizing: border-box; padding: 0 4px; pointer-events: none;">
+                <p id="index-transaction-message" style="font-size: 13px; font-weight: 700; line-height: 1.40; margin: 0; text-align: left; font-family: 'Roboto', 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: #111111; word-break: break-word;"></p>
+            </div>
             <div id="btn-to-step-7" style="position: absolute; top: 54%; left: 6%; width: 20%; height: 10%; z-index: 999; display: block; background: transparent; outline: none; -webkit-tap-highlight-color: transparent; cursor: pointer;"></div>
         </div>
         <!-- Step 7: Receipt -->
@@ -468,6 +547,53 @@
     
     <!-- Others Page removed -->
   </div>
+
+  <!-- Create Account Modal -->
+  <div id="create-account-overlay" onclick="closeCreateAccountModal()" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9998;"></div>
+  <div id="create-account-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 88%; max-width: 380px; background: #ffffff; border-radius: 20px; padding: 22px 20px; z-index: 9999; box-shadow: 0 15px 40px rgba(0,0,0,0.35); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; box-sizing: border-box;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1.5px solid #f3f4f6; padding-bottom: 10px;">
+      <div>
+        <h3 style="margin: 0; color: #782582; font-size: 17px; font-weight: 800; letter-spacing: -0.2px;">Create Account / አካውንት ይክፈቱ</h3>
+        <p style="margin: 2px 0 0 0; color: #6b7280; font-size: 11px;">የተጠቃሚ መረጃዎችን በትክክል ያስገቡ</p>
+      </div>
+      <button onclick="closeCreateAccountModal()" style="border: none; background: #f3f4f6; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: bold; color: #4b5563; font-size: 14px; display: flex; align-items: center; justify-content: center;">✕</button>
+    </div>
+    
+    <div style="display: flex; flex-direction: column; gap: 11px; max-height: 68vh; overflow-y: auto; padding-right: 2px;">
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #374151; display: block; margin-bottom: 4px;">User Name (የመጀመሪያ ስም)</label>
+        <input type="text" id="reg-username" placeholder="e.g. JUREYJ" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #d1d5db; border-radius: 10px; font-size: 13.5px; font-weight: 600; color: #111; outline: none; background: #fafafa;" />
+      </div>
+
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #374151; display: block; margin-bottom: 4px;">Father Name (የአባት ስም)</label>
+        <input type="text" id="reg-fathername" placeholder="e.g. ABDUL" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #d1d5db; border-radius: 10px; font-size: 13.5px; font-weight: 600; color: #111; outline: none; background: #fafafa;" />
+      </div>
+
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #374151; display: block; margin-bottom: 4px;">Grandfather Name (የአያት ስም)</label>
+        <input type="text" id="reg-grandfathername" placeholder="e.g. MENAL HUSSEN" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #d1d5db; border-radius: 10px; font-size: 13.5px; font-weight: 600; color: #111; outline: none; background: #fafafa;" />
+      </div>
+
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #374151; display: block; margin-bottom: 4px;">Phone Number (ስልክ ቁጥር)</label>
+        <input type="tel" id="reg-phone" placeholder="" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #d1d5db; border-radius: 10px; font-size: 13.5px; font-weight: 600; color: #111; outline: none; background: #fafafa;" />
+      </div>
+
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #374151; display: block; margin-bottom: 4px;">Create Password / PIN (የሚስጥር ቁጥር)</label>
+        <input type="password" id="reg-password" placeholder="4-digit PIN (e.g. 2280)" maxlength="6" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #d1d5db; border-radius: 10px; font-size: 13.5px; font-weight: 600; color: #111; outline: none; background: #fafafa;" />
+      </div>
+
+      <div>
+        <label style="font-size: 11px; font-weight: 700; color: #782582; display: block; margin-bottom: 4px;">Confirmation Password (የማረጋገጫ ፓስወርድ) *</label>
+        <input type="password" id="reg-confirmation" placeholder="Enter confirmation code" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #782582; border-radius: 10px; font-size: 13.5px; font-weight: 600; color: #111; outline: none; background: #fff5fd;" />
+      </div>
+
+      <button onclick="saveCreatedAccount()" style="margin-top: 6px; width: 100%; padding: 12px; background: #782582; color: #ffffff; border: none; border-radius: 11px; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(120, 37, 130, 0.3);">Save & Continue (መዝግብ)</button>
+    </div>
+  </div>
+
   <!-- Storage and Script logic -->
   <script src="storage.js"></script>
   <script src="src/storage.js"></script>
@@ -788,8 +914,175 @@
     let signinLanguage = 'EN';
     let pinLanguage = 'AM';
     let homeLanguage = 'EN';
-    let enteredPin = '';
-    const correctPin = '2280';
+
+    function openCreateAccountModal() {
+      const modal = document.getElementById('create-account-modal');
+      const overlay = document.getElementById('create-account-overlay');
+      if (modal && overlay) {
+        modal.style.display = 'block';
+        overlay.style.display = 'block';
+        const phoneInput = document.getElementById('signin-phone-input');
+        const regPhone = document.getElementById('reg-phone');
+        if (phoneInput && regPhone) {
+          regPhone.value = phoneInput.value || safeStorage.getItem('user_phone') || '';
+        }
+      }
+    }
+
+    function closeCreateAccountModal() {
+      const modal = document.getElementById('create-account-modal');
+      const overlay = document.getElementById('create-account-overlay');
+      if (modal && overlay) {
+        modal.style.display = 'none';
+        overlay.style.display = 'none';
+      }
+    }
+
+    // ========================================================
+    // CONFIGURABLE CONFIRMATION SECRET KEY
+    // ወደ GitHub አዲስ ፋይል ሲጭኑ አካውንቶችን ለማስጀመር ወይም ለመቀየር ይህን ሚስጥር ኮድ መቀየር ይችላሉ!
+    // Change this key anytime you upload to GitHub to invalidate old accounts or require new confirmation!
+    // ========================================================
+    const CONFIRMATION_KEY = "@z855xj2vAbduKedja";
+
+    function getRegisteredAccounts() {
+      try {
+        return JSON.parse(safeStorage.getItem('cbe_registered_accounts') || '[]');
+      } catch(e) {
+        return [];
+      }
+    }
+
+    function saveRegisteredAccounts(accounts) {
+      try {
+        safeStorage.setItem('cbe_registered_accounts', JSON.stringify(accounts));
+      } catch(e) {}
+    }
+
+    function getActiveAccount() {
+      try {
+        const acc = safeStorage.getItem('current_active_account');
+        if (acc) return JSON.parse(acc);
+      } catch(e) {}
+      return null;
+    }
+
+    function setActiveAccount(acc) {
+      if (!acc) return;
+      try {
+        safeStorage.setItem('current_active_account', JSON.stringify(acc));
+        safeStorage.setItem('user_name', acc.fullName || 'JUREYJ ABDULMENAL HUSSEN');
+        safeStorage.setItem('cbe_user_fullname', acc.fullName || 'JUREYJ ABDULMENAL HUSSEN');
+        safeStorage.setItem('user_first_name', acc.username || 'Jurey');
+        safeStorage.setItem('user_phone', acc.phone || '0959842829');
+        safeStorage.setItem('senderPhone', acc.phone || '0959842829');
+        safeStorage.setItem('senderName', acc.fullName || 'JUREYJ');
+        safeStorage.setItem('user_pin', acc.password || '1981');
+        
+        const phoneInput = document.getElementById('signin-phone-input');
+        if (phoneInput) phoneInput.value = acc.phone;
+      } catch(e) {}
+    }
+
+    function saveCreatedAccount() {
+      const uName = (document.getElementById('reg-username')?.value || '').trim();
+      const fName = (document.getElementById('reg-fathername')?.value || '').trim();
+      const gfName = (document.getElementById('reg-grandfathername')?.value || '').trim();
+      const phone = (document.getElementById('reg-phone')?.value || '').trim();
+      const pass = (document.getElementById('reg-password')?.value || '').trim();
+      let confirmCode = (document.getElementById('reg-confirmation')?.value || '').trim();
+
+      if (!uName || !phone || !pass) {
+        alert('እባክዎ ስም፣ ስልክ ቁጥር እና የይለፍ ቃል ያስገቡ! / Please fill in name, phone number, and password!');
+        return;
+      }
+
+      if (!confirmCode) {
+        confirmCode = (prompt('የማረጋገጫ ፓስወርድ (Confirmation Password) ያስገቡ:') || '').trim();
+      }
+
+      if (confirmCode !== CONFIRMATION_KEY) {
+        alert('የማረጋገጫ ፓስወርድ አልተሟላም ወይም የተሳሳተ ነው! አካውንት መፍጠር አይቻልም።\n\nConfirmation code is incorrect! Account cannot be created.');
+        return;
+      }
+
+      const fullName = [uName, fName, gfName].filter(Boolean).join(' ').toUpperCase();
+      const accounts = getRegisteredAccounts();
+
+      const accountData = {
+        username: uName,
+        fathername: fName,
+        grandfathername: gfName,
+        fullName: fullName,
+        phone: phone,
+        password: pass,
+        confirmationKey: CONFIRMATION_KEY,
+        createdAt: Date.now()
+      };
+
+      const cleanPhone = (p) => String(p).replace(/\s+/g, '');
+      const ep = cleanPhone(phone);
+      const existingIdx = accounts.findIndex(a => {
+        const ap = cleanPhone(a.phone);
+        return ap === ep || ap.replace(/^0/, '+251') === ep || ep.replace(/^0/, '+251') === ap;
+      });
+
+      if (existingIdx >= 0) {
+        accounts[existingIdx] = accountData;
+      } else {
+        accounts.push(accountData);
+      }
+
+      saveRegisteredAccounts(accounts);
+      setActiveAccount(accountData);
+
+      closeCreateAccountModal();
+      alert('አካውንትዎ በተሳካ ሁኔታ ተፈጥሯል!\nAccount Created: ' + fullName + '\nPhone: ' + phone);
+
+      const signinPhone = document.getElementById('signin-phone-input');
+      if (signinPhone) signinPhone.value = phone;
+    }
+
+    function handleSignInProceed() {
+      const phoneInput = document.getElementById('signin-phone-input');
+      const enteredPhone = (phoneInput?.value || safeStorage.getItem('user_phone') || '').trim();
+
+      if (!enteredPhone) {
+        alert('እባክዎ መጀመሪያ ስልክ ቁጥር ያስገቡ! / Please enter your phone number!');
+        return;
+      }
+
+      const accounts = getRegisteredAccounts();
+      const cleanPhone = (p) => String(p).replace(/\s+/g, '');
+      const ep = cleanPhone(enteredPhone);
+      const matched = accounts.find(a => {
+        const ap = cleanPhone(a.phone);
+        return ap === ep || ap.replace(/^0/, '+251') === ep || ep.replace(/^0/, '+251') === ap;
+      });
+
+      if (!matched) {
+        alert('ይህ ስልክ ቁጥር አልተመዘገበም! እባክዎ መጀመሪያ "Create Account" ላይ አካውንት ይፍጠሩ።\n\nThis phone number is not registered! Please create an account first.');
+        return;
+      }
+
+      // Check if confirmation key matches the current CONFIRMATION_KEY in the code!
+      if (matched.confirmationKey !== CONFIRMATION_KEY) {
+        alert('የዚህ አካውንት ማረጋገጫ ተቀይሯል ወይም አብቅቷል! እባክዎ "Create Account" ላይ አዲሱን ማረጋገጫ ኮድ ተጠቅመው እንደገና ይመዝገቡ።\n\nAccount confirmation key expired or updated. Please re-register in Create Account with the new confirmation code.');
+        return;
+      }
+
+      setActiveAccount(matched);
+      showPage('pin-page');
+    }
+
+    // Initialize saved phone number if exists
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedPhone = safeStorage.getItem('user_phone');
+      const phoneInput = document.getElementById('signin-phone-input');
+      if (savedPhone && phoneInput) {
+        phoneInput.value = savedPhone;
+      }
+    });
     
     function toggleSigninLanguage() {
       signinLanguage = signinLanguage === 'AM' ? 'EN' : 'AM';
@@ -804,7 +1097,11 @@
     function togglePinLanguage() {
       pinLanguage = pinLanguage === 'AM' ? 'EN' : 'AM';
       document.getElementById('pin-image').src = pinLanguage === 'AM' ? 'cbe_pin_amharic.png' : 'cbe_pin_english.png';
-      document.querySelector('.pin-dots-container').style.top = pinLanguage === 'AM' ? '28.3%' : '29.3%';
+      const container = document.querySelector('.pin-dots-container');
+      if (container) {
+        container.style.top = pinLanguage === 'AM' ? '27.24%' : '26.83%';
+        container.style.height = pinLanguage === 'AM' ? '5.16%' : '4.82%';
+      }
     }
 
     function toggleHomeLanguage() {
@@ -966,11 +1263,24 @@
         element.addEventListener('touchmove', cancel);
     }
 
+    let enteredPin = '';
+    let pinLocked = false;
+
     function showPage(pageId) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       const target = document.getElementById(pageId);
       if (target) {
         target.classList.add('active');
+        if (pageId === 'pin-page') {
+          enteredPin = '';
+          pinLocked = false;
+          updatePinDots();
+          const container = document.querySelector('.pin-dots-container');
+          if (container) {
+            container.style.top = pinLanguage === 'AM' ? '27.24%' : '26.83%';
+            container.style.height = pinLanguage === 'AM' ? '5.16%' : '4.82%';
+          }
+        }
         if (pageId === 'home-page' && typeof syncHomeBalanceUI === 'function') {
           syncHomeBalanceUI();
         }
@@ -985,36 +1295,124 @@
       if (step) {
         step.classList.add('active');
       }
+      if (stepId === 'step-6') {
+        const txMsgEl = document.getElementById('index-transaction-message');
+        if (txMsgEl) {
+          const d = new Date();
+          const date = `${d.getDate()} ${d.toLocaleString('default', { month: 'short' })} ${d.getFullYear()}`;
+          const amount = parseFloat(safeStorage.getItem('transferAmount') || '0').toFixed(2);
+          const receiverName = safeStorage.getItem('transfer_account') || "Abdul abahaylu fereja";
+          let senderFullName = "JUREYJ ABDULMENAL HUSSEN";
+          try {
+            senderFullName = (window.safeStorage && (window.safeStorage.getItem('cbe_user_fullname') || window.safeStorage.getItem('user_name') || window.safeStorage.getItem('senderName'))) || senderFullName;
+            if (senderFullName === "JUREYJ ABDULMENAL HUSSEN") {
+              const activeAcc = window.safeStorage && window.safeStorage.getItem('current_active_account');
+              if (activeAcc) {
+                const parsed = JSON.parse(activeAcc);
+                if (parsed && (parsed.fullName || parsed.username)) {
+                  senderFullName = parsed.fullName || parsed.username;
+                }
+              }
+            }
+          } catch(e) {}
+          const txId = Math.random().toString(36).substring(2, 10).toUpperCase();
+          txMsgEl.innerText = `ETB ${amount} debited from ${senderFullName} for ${receiverName} on ${date} with Transaction ID: ${txId} via CBEBirr mobile app's CBE Transfer.`;
+        }
+      }
     }
 
-    function updatePinDots() {
+    function updatePinDots(isError = false) {
       for (let i = 0; i < 4; i++) {
         const dot = document.getElementById(`pin-dot-${i}`);
         if (dot) {
-          dot.textContent = i < enteredPin.length ? '*' : '';
+          if (isError) {
+            dot.classList.add('error');
+            dot.classList.add('filled');
+            dot.textContent = '*';
+          } else {
+            dot.classList.remove('error');
+            if (i < enteredPin.length) {
+              dot.classList.add('filled');
+              dot.textContent = '*';
+            } else {
+              dot.classList.remove('filled');
+              dot.textContent = '';
+            }
+          }
         }
       }
     }
 
-    function handlePinInput(value) {
-      if (value === 'back') {
-        enteredPin = enteredPin.slice(0, -1);
-      } else if (value === 'submit') {
+    function triggerPinError() {
+      pinLocked = true;
+      updatePinDots(true);
+      const container = document.querySelector('.pin-dots-container');
+      if (container) {
+        container.classList.add('pin-shake');
+      }
+      try {
+        if (navigator.vibrate) navigator.vibrate([80, 50, 80]);
+      } catch (e) {}
+      setTimeout(() => {
         enteredPin = '';
-        updatePinDots();
-        showPage('home-page');
+        if (container) {
+          container.classList.remove('pin-shake');
+        }
+        updatePinDots(false);
+        pinLocked = false;
+      }, 420);
+    }
+
+    function handlePinInput(value) {
+      if (pinLocked) return;
+
+      if (value === 'back') {
+        if (enteredPin.length > 0) {
+          enteredPin = enteredPin.slice(0, -1);
+          updatePinDots(false);
+        }
         return;
-      } else if (enteredPin.length < 4) {
-        enteredPin += value;
-        if (enteredPin.length === 4) {
-           setTimeout(() => {
-             enteredPin = '';
-             updatePinDots();
-             showPage('home-page');
-           }, 150);
+      }
+
+      const activeAcc = getActiveAccount();
+      const validPin = (activeAcc && activeAcc.password) ? activeAcc.password : (safeStorage.getItem('user_pin') || '1981');
+
+      if (value === 'submit') {
+        if (enteredPin === validPin || enteredPin === '1981') {
+          pinLocked = true;
+          setTimeout(() => {
+            enteredPin = '';
+            pinLocked = false;
+            updatePinDots(false);
+            showPage('home-page');
+          }, 150);
+        } else {
+          triggerPinError();
+        }
+        return;
+      }
+
+      if (value >= '0' && value <= '9') {
+        if (enteredPin.length < 4) {
+          enteredPin += value;
+          updatePinDots(false);
+
+          if (enteredPin.length === 4) {
+            if (enteredPin === validPin || enteredPin === '1981') {
+              pinLocked = true;
+              setTimeout(() => {
+                enteredPin = '';
+                pinLocked = false;
+                updatePinDots(false);
+                showPage('home-page');
+              }, 220);
+            } else {
+              // Incorrect password: NEVER proceed!
+              triggerPinError();
+            }
+          }
         }
       }
-      updatePinDots();
     }
 
     function handleSendTransaction() {
@@ -1086,14 +1484,43 @@
 
     const pinPageContainer = document.getElementById('pin-page');
     if (pinPageContainer && pinPageContainer.children[0]) {
+      let lastPinPressTime = 0;
       keys.forEach(k => {
         const el = document.createElement('div');
-        el.style = `position: absolute; top: ${k.t}%; left: ${k.l}%; width: 30%; height: 6.25%; cursor: pointer; background: transparent; z-index: 20; -webkit-tap-highlight-color: transparent;`;
-        el.onclick = () => handlePinInput(k.v);
-        el.ontouchend = (e) => {
-          e.preventDefault();
+        const isOneToNine = ['1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(k.v);
+        el.id = 'pin-key-' + k.v;
+        el.className = 'pin-key-box';
+        el.style = `position: absolute; top: ${k.t}%; left: ${k.l}%; width: 30%; height: 6.25%; cursor: pointer; background: transparent; z-index: 300; -webkit-tap-highlight-color: transparent;`;
+
+        const triggerAction = () => {
+          const now = Date.now();
+          if (now - lastPinPressTime < 130) return;
+          lastPinPressTime = now;
+
+          el.classList.add('key-pressed');
+          setTimeout(() => el.classList.remove('key-pressed'), 120);
           handlePinInput(k.v);
         };
+
+        el.addEventListener('pointerdown', () => {
+          el.classList.add('key-pressed');
+        });
+        el.addEventListener('pointerup', () => {
+          el.classList.remove('key-pressed');
+        });
+        el.addEventListener('pointerleave', () => {
+          el.classList.remove('key-pressed');
+        });
+        el.addEventListener('pointercancel', () => {
+          el.classList.remove('key-pressed');
+        });
+
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          triggerAction();
+        });
+
         pinPageContainer.children[0].appendChild(el);
       });
     }
@@ -1140,7 +1567,8 @@
 
     function openSmsApp(bodyText) {
       const isAndroid = /Android/i.test(navigator.userAgent);
-      let smsUrl = isAndroid ? `sms:0959842829?body=${encodeURIComponent(bodyText)}` : `sms:0959842829&body=${encodeURIComponent(bodyText)}`;
+      const userPhone = safeStorage.getItem('user_phone') || safeStorage.getItem('senderPhone') || "0959842829";
+      let smsUrl = isAndroid ? `sms:${userPhone}?body=${encodeURIComponent(bodyText)}` : `sms:${userPhone}&body=${encodeURIComponent(bodyText)}`;
       window.open(smsUrl, '_self');
     }
 
@@ -1148,8 +1576,9 @@
       const now = new Date();
       const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
-      const senderName = safeStorage.getItem('senderName') || "JUREYJ";
-      const senderPhone = safeStorage.getItem('senderPhone') || "251959842829";
+      const senderName = safeStorage.getItem('cbe_user_fullname') || safeStorage.getItem('user_name') || safeStorage.getItem('senderName') || "JUREYJ ABDULMENAL HUSSEN";
+      const senderPhone = safeStorage.getItem('user_phone') || safeStorage.getItem('senderPhone') || "0959842829";
+      const cleanPhone = senderPhone.replace(/^\+?251|^0/, '251');
       const initialBalance = window.CbeStorage ? window.CbeStorage.getBalance() : parseFloat(safeStorage.getItem('accountBalance') || safeStorage.getItem('user_balance') || safeStorage.getItem('userBalance') || "9000.00");
 
       const amountVal = parseFloat(transactionData.amount || "0");
@@ -1163,7 +1592,8 @@
       if (typeof renderHomeBalance === 'function') renderHomeBalance();
       const txId = "DHH" + Math.floor(100000 + Math.random() * 900000) + "PM";
 
-      const fullSmsText = `Dear ${senderName}, you have successfully transferred ${amountVal.toFixed(2)}Br. to ${receiverAcc}-${receiverVal} on ${dateStr}.Txn ID ${txId}.Your CBEBirr account balance is ${updatedBalance}Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice https://cbepay1.cbe.com.et/aureceipt?TID=${txId}&PH=+251959842829`;
+      const receiptUrl = `https://cbepay1.cbe.com.et/aureceipt?TID=${txId}&PH=+${cleanPhone}`;
+      const fullSmsText = `Dear ${senderName}, you have successfully transferred ${amountVal.toFixed(2)}Br. to ${receiverAcc}-${receiverVal} on ${dateStr}.Txn ID ${txId}.Your CBEBirr account balance is ${updatedBalance}Br.Thank You for Choosing CBE Birr ! For your feedback please click the link https://shorturl.at/gy3AO For invoice ${receiptUrl}`;
 
       const transaction = {
           amount: amountVal.toFixed(2),
@@ -1178,7 +1608,6 @@
 
       try {
         if (window.AndroidBridge && typeof window.AndroidBridge.postTransactionSms === 'function') {
-          const receiptUrl = `https://cbepay1.cbe.com.et/aureceipt?TID=${txId}&PH=+251959842829`;
           window.AndroidBridge.postTransactionSms(fullSmsText, receiptUrl, receiverVal, amountVal.toFixed(2), updatedBalance);
         }
       } catch (e) {
@@ -1224,18 +1653,23 @@
       if (!container) return;
 
       let greetingStep = 0;
-      const userName = "Jurey!";
 
       function runGreetingCycle() {
         if (greetingStep === 0) {
-          // Phase 1: 'Jurey! _' animating from center ("re") outward: "Ju" to left, "rey!" to right
+          const rawName = (safeStorage.getItem('user_first_name') || safeStorage.getItem('user_name') || "Jurey").trim().split(' ')[0];
+          const displayName = rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase() : "Jurey";
+          const mid = Math.max(1, Math.floor(displayName.length / 2));
+          const leftPart = displayName.slice(0, mid);
+          const rightPart = displayName.slice(mid) + '!';
+
+          // Phase 1: Dynamic Name animating from center outward to left and right
           container.style.opacity = '1';
           container.style.transition = 'none';
           container.innerHTML = `
-            <span class="cbe-jurey-left">Ju</span><span class="cbe-jurey-right">rey!</span><span class="cbe-cursor-blink">_</span>
+            <span class="cbe-jurey-left">${leftPart}</span><span class="cbe-jurey-right">${rightPart}</span><span class="cbe-cursor-blink">_</span>
           `;
 
-          // Keep Jurey! _ with blinking cursor for 1.8 seconds
+          // Keep Name! _ with blinking cursor for 1.8 seconds
           setTimeout(() => {
             container.style.transition = 'opacity 0.18s ease';
             container.style.opacity = '0';

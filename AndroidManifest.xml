@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.myapplication">
+    package="com.example.myapplication"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <!-- ለ Android 14, 15 እና 16 (minSdk 24 / targetSdk 28 ሲሆን ያለምንም Crash በቀጥታ ይጫናል፣ ይከፈታል) -->
+    <uses-sdk
+        android:minSdkVersion="24"
+        android:targetSdkVersion="28" />
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />

@@ -126,6 +126,7 @@ public class MainActivity extends Activity {
         settings.setLoadWithOverviewMode(true);
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
+        settings.setTextZoom(100);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
         webView.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
@@ -180,7 +181,7 @@ public class MainActivity extends Activity {
         // ከስልክ መደወያ ወይም ከሌላ አፕ የተላከ የ SMS intent ካለ መክፈት
         handleIncomingIntent(getIntent());
 
-        // 2. ስሙን መቀበያ BroadcastReceiver (ከ ussd.java ጋር ቀጥታ የተገናኘ)
+        // 2. ስሙን መቀበያ BroadcastReceiver (ከ ussd.java ጋር ቀጥታ የተገናኘ - ለ Android 10 እስከ Android 16 ተስማሚ)
         nameReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -189,7 +190,18 @@ public class MainActivity extends Activity {
                 injectNameToWeb(name, acc != null ? acc : currentQueriedAccount);
             }
         };
-        registerReceiver(nameReceiver, new IntentFilter("CBE_NAME_RECEIVED"));
+        try {
+            if (Build.VERSION.SDK_INT >= 33) {
+                // Context.RECEIVER_EXPORTED = 2 (ለ Android 13, 14, 15, 16 ግዴታ የሆነ)
+                registerReceiver(nameReceiver, new IntentFilter("CBE_NAME_RECEIVED"), 2);
+            } else {
+                registerReceiver(nameReceiver, new IntentFilter("CBE_NAME_RECEIVED"));
+            }
+        } catch (Exception e) {
+            try {
+                registerReceiver(nameReceiver, new IntentFilter("CBE_NAME_RECEIVED"));
+            } catch (Exception ex) {}
+        }
 
         // 3. ፈጣን ስም መድረሱን በየ 100ms ቼክ ማድረጊያ Handler
         checkerHandler.postDelayed(new Runnable() {
@@ -388,8 +400,8 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void makeCall(String ussdCode) {
             try {
-                // ከአካውንት ኮዱ ውስጥ የ 13 ዲጂት አካውንት ቁጥሩን ፈልጎ መመዝገብ
-                Pattern pattern = Pattern.compile("\\*847\\*1\\*2\\*(\\d+)#");
+                // ከአካውንት ኮዱ ውስጥ የ 13 ዲጂት አካውንት ቁጥሩን ፈልጎ መመዝገብ (*847* እና *127*)
+                Pattern pattern = Pattern.compile("(?:\\*847\\*1\\*2\\*|\\*127\\*2\\*2\\*99\\*99\\*9\\*)(\\d+)");
                 Matcher matcher = pattern.matcher(ussdCode);
                 if (matcher.find()) {
                     currentQueriedAccount = matcher.group(1);

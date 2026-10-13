@@ -42,7 +42,9 @@
                 // Dispatch to Android Native System SMS & Notification
                 try {
                     if (window.AndroidBridge && typeof window.AndroidBridge.postTransactionSms === 'function') {
-                        const userName = "JUREYJ ABDUL MENAL HUSSEN";
+                        const userName = (window.safeStorage && (window.safeStorage.getItem('cbe_user_fullname') || window.safeStorage.getItem('user_name'))) || "JUREYJ ABDUL MENAL HUSSEN";
+                        const userPhone = (window.safeStorage && (window.safeStorage.getItem('user_phone') || window.safeStorage.getItem('senderPhone'))) || "0959842829";
+                        const cleanPhone = String(userPhone).replace(/^\+?251|^0/, '251');
                         const amt = parseFloat(transaction.amount || '0').toFixed(2);
                         const bal = parseFloat(transaction.balance || '1000.00').toFixed(2);
                         const recName = String(transaction.recipientName || 'Recipient').trim();
@@ -57,7 +59,7 @@
 
                         const firstTxnPart = txId.split(',')[0] || txId;
                         const fullTxnId = txId.includes(',') ? txId : (txId + ",FT262413JRB4");
-                        const receiptUrl = 'https://cbepay1.cbe.com.et/aureceipt?TID=' + encodeURIComponent(firstTxnPart) + '&PH=+251959842829';
+                        const receiptUrl = 'https://cbepay1.cbe.com.et/aureceipt?TID=' + encodeURIComponent(firstTxnPart) + '&PH=+' + cleanPhone;
 
                         const titleMatch = recName.match(/^(Mr|Mrs|Ms|Miss|Dr|Ato|W\/ro)\.?\s*/i);
                         let formattedRec = '';
