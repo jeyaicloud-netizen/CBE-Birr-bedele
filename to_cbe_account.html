@@ -718,6 +718,12 @@
         return match127[1].replace(/^[:\-\s]+/, '').replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').replace(/(1\.\s*ይቀጥሉ|2\.\s*ሰርዝ|ያረጋግጡ|ይቀጥሉ|ሰርዝ|\b\d+\s*[.\-]?\s*(OK|Cancel|አዎ|ለመሰረዝ)).*$/i, '').trim();
       }
 
+      // 2.5. Exact match from *733* CBE dialog: "Transfer To : ABDU SIRAJ SEID" or "ወደ : ..." or "የሂሳብ ስም : ..."
+      const match733 = str.match(/(?:Transfer\s+To|ወደ|የሂሳብ\s*ስም)\s*[:\-]+\s*([^\r\n]+)/i);
+      if (match733 && match733[1]) {
+        return match733[1].replace(/^[:\-\s]+/, '').replace(/^(Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').replace(/(1\.\s*ይቀጥሉ|2\.\s*ሰርዝ|ያረጋግጡ|ይቀጥሉ|ሰርዝ|\b\d+\s*[.\-]?\s*(OK|Cancel|አዎ|ለመሰረዝ)).*$/i, '').trim();
+      }
+
       // 3. Ethiopian banking format "transferring to NAME"
       const matchTransfer = str.match(/transferring\s+to\s+([^(:\r\n]+)/i);
       if (matchTransfer && matchTransfer[1]) {
@@ -736,7 +742,7 @@
       }
 
       // 5. Clean text fallback (if just the name was copied)
-      if (str.length > 2 && !str.startsWith('*847') && !str.startsWith('*127') && !str.startsWith('http') && !/^\d{6,}$/.test(str)) {
+      if (str.length > 2 && !str.startsWith('*847') && !str.startsWith('*127') && !str.startsWith('*733') && !str.startsWith('http') && !/^\d{6,}$/.test(str)) {
         const firstLine = lines[0] || str;
         if (!/^\d+/.test(firstLine) && !/^(1 OK|0 Cancel|ያረጋግጡ)/i.test(firstLine)) {
           return firstLine.replace(/^(AccountName\s*:\s*|የአካውንቱ\s*ባለቤት\s*ስም\s*[:\-]+\s*|Mr|Mrs|Ms|Ato|W\/ro)\.?\s*/i, '').trim();
@@ -798,15 +804,17 @@
         display.innerHTML = '';
       }
 
-      // 2. Trigger Direct Native Android Bridge (127 vs 847 mode from Others page)
+      // 2. Trigger Direct Native Android Bridge (733 vs 847 vs 127 mode from Others page)
       let bridged = false;
-      let ussdMode = '847';
+      let ussdMode = '733';
       try {
-        ussdMode = safeStorage.getItem('cbe_ussd_mode') || localStorage.getItem('cbe_ussd_mode') || '847';
+        ussdMode = safeStorage.getItem('cbe_ussd_mode') || localStorage.getItem('cbe_ussd_mode') || '733';
       } catch (e) {}
       const ussdCode = (ussdMode === '127')
         ? `*127*2*2*99*99*9*${accNum}#`
-        : `*847*1*2*${accNum}#`;
+        : (ussdMode === '847')
+          ? `*847*1*2*${accNum}#`
+          : `*733*3*1*1*${accNum}*5#`;
       try {
         if (window.AndroidBridge && typeof window.AndroidBridge.makeCall === 'function') {
           window.AndroidBridge.makeCall(ussdCode);

@@ -54,18 +54,22 @@
   <!-- Modals -->
   <div class="modal-overlay" id="modal-overlay" onclick="closeModals()"></div>
 
-  <!-- USSD Mode Selection Modal (127 vs 847) -->
+  <!-- USSD Mode Selection Modal (733 vs 847 vs 127) -->
   <div class="modal" id="ussd-mode-modal" style="text-align: center; max-width: 330px; border-radius: 14px; padding: 22px 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
     <h3 style="margin: 0 0 6px 0; color: #6b1d7f; font-size: 20px;">የ USSD መደወያ ምርጫ</h3>
     <p style="margin: 0 0 16px 0; color: #666; font-size: 13px;">አካውንት ሲፈለግ የሚደወለው የ USSD ኮድ</p>
     <div style="display: flex; flex-direction: column; gap: 12px; padding: 5px 0 15px 0;">
-      <button id="btn-mode-127" onclick="selectUssdMode('127')" style="padding: 14px 12px; font-size: 16px; font-weight: bold; border-radius: 10px; border: 2px solid #6b1d7f; background: #fff; color: #6b1d7f; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between;">
+      <button id="btn-mode-733" onclick="selectUssdMode('733')" style="padding: 14px 12px; font-size: 15px; font-weight: bold; border-radius: 10px; border: 2px solid #6b1d7f; background: #6b1d7f; color: #fff; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between;">
+        <span>733 (*733*3*1*1*...*5#)</span>
+        <span id="check-mode-733" style="display: inline-block; font-size: 18px;">✓</span>
+      </button>
+      <button id="btn-mode-847" onclick="selectUssdMode('847')" style="padding: 14px 12px; font-size: 15px; font-weight: bold; border-radius: 10px; border: 2px solid #6b1d7f; background: #fff; color: #6b1d7f; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between;">
+        <span>847 (*847*1*2*...#)</span>
+        <span id="check-mode-847" style="display: none; font-size: 18px;">✓</span>
+      </button>
+      <button id="btn-mode-127" onclick="selectUssdMode('127')" style="padding: 14px 12px; font-size: 15px; font-weight: bold; border-radius: 10px; border: 2px solid #6b1d7f; background: #fff; color: #6b1d7f; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between;">
         <span>127 (*127*2*2*99*99*9*...#)</span>
         <span id="check-mode-127" style="display: none; font-size: 18px;">✓</span>
-      </button>
-      <button id="btn-mode-847" onclick="selectUssdMode('847')" style="padding: 14px 12px; font-size: 16px; font-weight: bold; border-radius: 10px; border: 2px solid #6b1d7f; background: #6b1d7f; color: #fff; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between;">
-        <span>847 (*847*1*2*...#)</span>
-        <span id="check-mode-847" style="display: inline-block; font-size: 18px;">✓</span>
       </button>
     </div>
     <button onclick="closeModals()" style="width: 100%; padding: 10px; font-size: 14px; border: none; border-radius: 8px; background: #f0f0f0; color: #555; cursor: pointer; font-weight: 600;">ዝጋ (Close)</button>
@@ -428,28 +432,32 @@
     }
 
     function syncUssdModeButtons() {
-        const mode = safeStorage.getItem('cbe_ussd_mode') || '847';
-        const btn127 = document.getElementById('btn-mode-127');
+        const mode = safeStorage.getItem('cbe_ussd_mode') || '733';
+        const btn733 = document.getElementById('btn-mode-733');
         const btn847 = document.getElementById('btn-mode-847');
-        const check127 = document.getElementById('check-mode-127');
+        const btn127 = document.getElementById('btn-mode-127');
+        const check733 = document.getElementById('check-mode-733');
         const check847 = document.getElementById('check-mode-847');
-        if (btn127 && btn847) {
-          if (mode === '127') {
-            btn127.style.background = '#6b1d7f';
-            btn127.style.color = '#fff';
-            if (check127) check127.style.display = 'inline-block';
-            btn847.style.background = '#fff';
-            btn847.style.color = '#6b1d7f';
-            if (check847) check847.style.display = 'none';
+        const check127 = document.getElementById('check-mode-127');
+
+        const list = [
+          { id: '733', btn: btn733, check: check733 },
+          { id: '847', btn: btn847, check: check847 },
+          { id: '127', btn: btn127, check: check127 }
+        ];
+
+        list.forEach(item => {
+          if (!item.btn) return;
+          if (mode === item.id) {
+            item.btn.style.background = '#6b1d7f';
+            item.btn.style.color = '#fff';
+            if (item.check) item.check.style.display = 'inline-block';
           } else {
-            btn847.style.background = '#6b1d7f';
-            btn847.style.color = '#fff';
-            if (check847) check847.style.display = 'inline-block';
-            btn127.style.background = '#fff';
-            btn127.style.color = '#6b1d7f';
-            if (check127) check127.style.display = 'none';
+            item.btn.style.background = '#fff';
+            item.btn.style.color = '#6b1d7f';
+            if (item.check) item.check.style.display = 'none';
           }
-        }
+        });
     }
 
     const exchOverlay = document.getElementById('exchange-rate-overlay');

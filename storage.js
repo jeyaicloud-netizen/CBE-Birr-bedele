@@ -102,7 +102,6 @@
                 window.safeStorage.setItem('user_balance', formatted);
                 window.safeStorage.setItem('userBalance', formatted);
 
-                // Update the balance in the latest transaction in cbe_transactions
                 try {
                     const txns = window.CbeStorage.getTransactions();
                     if (txns && txns.length > 0) {
@@ -129,8 +128,7 @@
                 window.safeStorage.setItem('accountBalance', newBalance);
                 window.safeStorage.setItem('user_balance', newBalance);
                 window.safeStorage.setItem('userBalance', newBalance);
-                
-                // Keep the latest transaction balance in cbe_transactions in sync
+
                 try {
                     const txns = window.CbeStorage.getTransactions();
                     if (txns && txns.length > 0) {
@@ -201,7 +199,6 @@
     window.onUssdResult = function(rawText, passedAcc) {
         if (!rawText) return;
         let cleanName = String(rawText).trim();
-        // Match standard CBE formats
         const matchName = cleanName.match(/(?:AccountName|Account\s*Name|Customer\s*Name|transferring\s*to|የተጠቃሚ\s*ስም)\s*[:\-]?\s*([^\r\n]+)/i);
         if (matchName && matchName[1]) {
             cleanName = matchName[1].trim();
